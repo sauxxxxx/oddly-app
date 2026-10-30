@@ -8,6 +8,7 @@ mod rate_limit;
 mod reminders;
 mod routes;
 mod state;
+mod storage;
 #[cfg(test)]
 mod smoke_tests;
 mod supabase;

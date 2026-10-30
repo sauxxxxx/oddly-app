@@ -11,6 +11,10 @@ import { ChangePasswordPage } from "@/features/auth/change-password-page";
 import { LoginPage } from "@/features/auth/login-page";
 import { RequireAuth } from "@/features/auth/require-auth";
 import { SetupPage } from "@/features/auth/setup-page";
+import { ClientDetailPage } from "@/features/clients/client-detail-page";
+import { ClientHistoryPage, ClientProfilesPage, ClientsPage } from "@/features/clients/clients-page";
+import { ContractsPage } from "@/features/clients/contracts-page";
+import { ServicesCatalogPage } from "@/features/clients/services-page";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { DuplicatesPage } from "@/features/leads/duplicates-page";
 import { ImportExportPage } from "@/features/leads/import-export-page";
@@ -76,6 +80,13 @@ const router = createHashRouter([
               { path: "sales/proposals", element: <ProposalsPage /> },
               { path: "sales/proposals/:id", element: <ProposalEditorPage /> },
               { path: "sales/deals", element: <DealsPage /> },
+              { path: "clients", element: <ClientsPage /> },
+              { path: "clients/profiles", element: <ClientProfilesPage /> },
+              { path: "clients/services", element: <ServicesCatalogPage /> },
+              { path: "clients/contracts", element: <ContractsPage /> },
+              { path: "clients/history", element: <ClientHistoryPage /> },
+              { path: "clients/record/:id", element: <ClientDetailPage /> },
+              { path: "settings/services", element: <ServicesCatalogPage /> },
               { path: "settings", element: <Navigate to="/settings/profile" replace /> },
               { path: "settings/profile", element: <ProfilePage /> },
               { path: "settings/team", element: <TeamPage /> },

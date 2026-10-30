@@ -4,7 +4,7 @@ use anyhow::Context;
 use sqlx::PgPool;
 use tokio::sync::Mutex;
 
-use crate::{auth::JwtVerifier, config::Config, rate_limit::RateLimiter, supabase::SupabaseAdmin};
+use crate::{auth::JwtVerifier, config::Config, rate_limit::RateLimiter, storage::Storage, supabase::SupabaseAdmin};
 
 /// Shared, cheaply clonable application state.
 #[derive(Clone)]
@@ -13,6 +13,7 @@ pub struct AppState {
     pub config: Arc<Config>,
     pub jwt: Arc<JwtVerifier>,
     pub supabase: Arc<SupabaseAdmin>,
+    pub storage: Arc<Storage>,
     pub limiter: Arc<RateLimiter>,
     /// Serializes first-run owner creation.
     pub setup_lock: Arc<Mutex<()>>,
@@ -28,7 +29,8 @@ impl AppState {
 
         Ok(Self {
             jwt: Arc::new(JwtVerifier::new(&config, http.clone())),
-            supabase: Arc::new(SupabaseAdmin::new(&config, http)),
+            supabase: Arc::new(SupabaseAdmin::new(&config, http.clone())),
+            storage: Arc::new(Storage::new(&config, http)),
             limiter: Arc::new(RateLimiter::default()),
             setup_lock: Arc::new(Mutex::new(())),
             config: Arc::new(config),

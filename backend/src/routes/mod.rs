@@ -5,8 +5,10 @@ use axum::{
 
 use crate::state::AppState;
 
+pub(crate) mod clients;
 pub(crate) mod common;
 pub(crate) mod dashboard;
+pub(crate) mod files;
 pub(crate) mod health;
 pub(crate) mod leads;
 pub(crate) mod lookups;
@@ -72,6 +74,28 @@ pub fn router(state: AppState) -> Router {
         .route("/proposals/{id}", get(sales::proposals::get).put(sales::proposals::save).delete(sales::proposals::remove))
         .route("/proposals/{id}/status", post(sales::proposals::set_status))
         .route("/proposals/{id}/duplicate", post(sales::proposals::duplicate))
+        // Clients
+        .route("/clients", get(clients::list).post(clients::create))
+        .route("/clients/activity", get(clients::feed))
+        .route("/clients/{id}", get(clients::get).put(clients::update).delete(clients::remove))
+        .route("/clients/{id}/status", post(clients::set_status))
+        .route("/clients/{id}/history", get(clients::history))
+        .route("/clients/{id}/contacts", post(clients::add_contact))
+        .route("/clients/{id}/contacts/{contact_id}", axum::routing::put(clients::update_contact).delete(clients::remove_contact))
+        .route("/clients/{id}/services", post(clients::add_service))
+        .route("/clients/{id}/services/{service_id}", axum::routing::put(clients::update_service).delete(clients::remove_service))
+        .route("/clients/{id}/onboarding", post(clients::start_onboarding))
+        .route("/clients/{id}/onboarding/{task_id}", post(clients::toggle_onboarding))
+        .route("/clients/{id}/contracts", post(clients::contracts::create))
+        .route("/contracts", get(clients::contracts::list))
+        .route("/contracts/{id}", axum::routing::put(clients::contracts::update).delete(clients::contracts::remove))
+        .route("/services", get(clients::services::list).post(clients::services::create))
+        .route("/services/{id}", axum::routing::put(clients::services::update))
+        // Files
+        .route("/files", get(files::list).post(files::register))
+        .route("/files/upload-url", post(files::upload_url))
+        .route("/files/{id}/download", get(files::download))
+        .route("/files/{id}", axum::routing::delete(files::remove))
         .route("/saved-filters", get(saved_filters::list).post(saved_filters::create))
         .route("/saved-filters/{id}", axum::routing::delete(saved_filters::remove));
 

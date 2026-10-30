@@ -383,3 +383,118 @@ async fn smoke_sales() {
     cleanup(&state, user.id).await;
     eprintln!("smoke_sales: OK");
 }
+#[tokio::test]
+async fn smoke_clients() {
+    let Some((state, user)) = setup().await else { return };
+    cleanup(&state, user.id).await;
+    let st = || State(state.clone());
+    let u = || user.clone();
+
+    // A lead with the same business blocks a manual client (use conversion instead)...
+    let lead = to_value(
+        routes::leads::create(st(), u(), Json(de(json!({
+            "business_name": format!("{TAG} Oslob Whale Tours"), "market": "local", "city": "Oslob",
+            "website_url": "smoke-oslob-whales.test", "next_action": "Call"
+        })))).await,
+    );
+    let dup = routes::clients::create(st(), u(), Json(de(json!({ "business_name": format!("{TAG} Oslob Whale Tours"), "market": "local", "website_url": "https://smoke-oslob-whales.test" })))).await;
+    assert!(matches!(dup, Err(crate::error::AppError::Conflict(_))), "duplicate of a lead must be refused");
+
+    // ...but a new business can be added directly.
+    let client = to_value(
+        routes::clients::create(st(), u(), Json(de(json!({
+            "business_name": format!("{TAG} Sydney Dental"), "market": "international", "country": "Australia", "city": "Sydney",
+            "contact_name": "Dr. Kim", "contact_email": "kim@smoke-sydney-dental.test", "status": "onboarding"
+        })))).await,
+    );
+    let cid: Uuid = de(client["id"].clone());
+    assert_eq!(client["company"]["market"], "international");
+    assert_eq!(client["contacts"].as_array().unwrap().len(), 1);
+
+    // Services -> monthly value per currency.
+    let with_services = to_value(routes::clients::add_service(st(), u(), Path(cid), Json(de(json!({ "name": "Social media management", "price": "900", "currency": "AUD", "billing_type": "monthly" })))).await);
+    to_value(routes::clients::add_service(st(), u(), Path(cid), Json(de(json!({ "name": "Website maintenance", "price": "1200", "currency": "AUD", "billing_type": "yearly" })))).await);
+    let detail = to_value(routes::clients::get(st(), u(), Path(cid)).await);
+    assert_eq!(detail["monthly_value"]["AUD"], "1000.00", "900 monthly + 1200/12: {detail}");
+    let sid: Uuid = de(with_services["services"][0]["id"].clone());
+    to_value(routes::clients::update_service(st(), u(), Path((cid, sid)), Json(de(json!({ "name": "Social media management", "price": "950", "currency": "AUD", "billing_type": "monthly", "status": "paused" })))).await);
+
+    // Contacts.
+    let c2 = to_value(routes::clients::add_contact(st(), u(), Path(cid), Json(de(json!({ "full_name": "Ana Lee", "position": "Office manager", "is_primary": true })))).await);
+    let contacts = c2["contacts"].as_array().unwrap();
+    assert_eq!(contacts.len(), 2);
+    assert_eq!(contacts[0]["full_name"], "Ana Lee", "new primary contact first");
+
+    // Onboarding checklist: finishing it activates the client.
+    let ob = to_value(routes::clients::start_onboarding(st(), u(), Path(cid)).await);
+    let items: Vec<Uuid> = ob["onboarding"].as_array().unwrap().iter().map(|i| de(i["id"].clone())).collect();
+    assert_eq!(items.len(), 7);
+    let mut last = json!(null);
+    for t in items {
+        last = to_value(routes::clients::toggle_onboarding(st(), u(), Path((cid, t)), Json(de(json!({ "done": true })))).await);
+    }
+    assert_eq!(last["status"], "active", "{last}");
+
+    // Contracts.
+    let k = to_value(
+        routes::clients::contracts::create(st(), u(), Path(cid), Json(de(json!({
+            "title": format!("{TAG} Retainer 2026"), "status": "signed", "start_date": "2026-11-01", "end_date": "2026-11-20",
+            "value": "11400", "currency": "AUD", "billing_cycle": "monthly"
+        })))).await,
+    );
+    assert_eq!(k["status"], "signed");
+    let expiring = to_value(routes::clients::contracts::list(st(), u(), Query(de(json!({ "expiring_days": 30 })))).await);
+    assert!(expiring.as_array().unwrap().iter().any(|c| c["id"] == k["id"]), "{expiring}");
+
+    // Files: real upload to private storage, verified, downloadable, deletable.
+    let ticket = to_value(
+        routes::files::upload_url(st(), u(), Json(de(json!({
+            "bucket": "documents", "entity_type": "client", "entity_id": cid, "file_name": "brand guide.pdf",
+            "content_type": "application/pdf", "size_bytes": 20
+        })))).await,
+    );
+    let put = reqwest::Client::new()
+        .put(ticket["upload_url"].as_str().unwrap())
+        .header("content-type", "application/pdf")
+        .body(b"%PDF-1.4 smoke test\n".to_vec())
+        .send()
+        .await
+        .unwrap();
+    assert!(put.status().is_success(), "upload failed: {}", put.text().await.unwrap_or_default());
+    let file = to_value(
+        routes::files::register(st(), u(), Json(de(json!({
+            "bucket": "documents", "storage_path": ticket["storage_path"], "entity_type": "client", "entity_id": cid,
+            "original_name": "brand guide.pdf", "category": "brand_guideline"
+        })))).await,
+    );
+    assert_eq!(file["size_bytes"], 20, "{file}");
+    let fid: Uuid = de(file["id"].clone());
+    let link = to_value(routes::files::download(st(), u(), Path(fid), Query(de(json!({ "attachment": true })))).await);
+    let got = reqwest::get(link["url"].as_str().unwrap()).await.unwrap().bytes().await.unwrap();
+    assert_eq!(&got[..], b"%PDF-1.4 smoke test\n");
+    // A path for another record is refused.
+    let bad = routes::files::register(st(), u(), Json(de(json!({
+        "bucket": "documents", "storage_path": ticket["storage_path"], "entity_type": "client", "entity_id": Uuid::new_v4(), "original_name": "x.pdf"
+    })))).await;
+    assert!(bad.is_err());
+    routes::files::remove(st(), u(), Path(fid)).await.expect("delete file");
+
+    // Lists, history, feed, catalog, status.
+    let list = to_value(routes::clients::list(st(), u(), Query(de(json!({ "search": TAG })))).await);
+    assert_eq!(list["total"], 1);
+    let hist = to_value(routes::clients::history(st(), u(), Path(cid)).await);
+    assert!(hist.as_array().unwrap().len() >= 3, "{hist}");
+    to_value(routes::clients::feed(st(), u(), Query(de(json!({})))).await);
+    let catalog = to_value(routes::clients::services::list(st(), u()).await);
+    assert!(catalog.as_array().unwrap().len() >= 8);
+    let at_risk = to_value(routes::clients::set_status(st(), u(), Path(cid), Json(de(json!({ "status": "at_risk" })))).await);
+    assert_eq!(at_risk["status"], "at_risk");
+    let _ = lead;
+
+    sqlx::query("delete from public.files where entity_id = $1").bind(cid).execute(&state.db).await.unwrap();
+    sqlx::query("delete from public.tasks where client_id = $1").bind(cid).execute(&state.db).await.unwrap();
+    sqlx::query("delete from public.contracts where client_id = $1").bind(cid).execute(&state.db).await.unwrap();
+    sqlx::query("delete from public.audit_logs where entity_id = $1 or (action = 'file.deleted' and entity_id = $2)").bind(cid).bind(fid).execute(&state.db).await.unwrap();
+    cleanup(&state, user.id).await;
+    eprintln!("smoke_clients: OK");
+}
