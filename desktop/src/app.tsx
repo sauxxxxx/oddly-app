@@ -19,11 +19,19 @@ import { LeadListDetailPage, LeadListsPage } from "@/features/leads/lead-lists-p
 import { LeadsPage } from "@/features/leads/leads-page";
 import { LeadResearchPage } from "@/features/leads/research-page";
 import { ModuleRoadmapPage } from "@/features/roadmap/module-roadmap-page";
+import { FollowUpsPage, MeetingsPage, OutreachPage } from "@/features/sales/activity-pages";
+import { DealsPage } from "@/features/sales/deals-page";
+import { registerLeadSalesExtensions } from "@/features/sales/lead-extensions";
+import { PipelinePage } from "@/features/sales/pipeline-page";
+import { ProposalEditorPage } from "@/features/sales/proposal-editor-page";
+import { ProposalsPage } from "@/features/sales/proposals-page";
 import { ProfilePage } from "@/features/settings/profile-page";
 import { RolesPage } from "@/features/settings/roles-page";
 import { TeamPage } from "@/features/settings/team-page";
 import { ApiError } from "@/lib/api";
 import { missingEnv } from "@/lib/env";
+
+registerLeadSalesExtensions();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +68,14 @@ const router = createHashRouter([
               { path: "leads/import", element: <ImportExportPage /> },
               { path: "leads/duplicates", element: <DuplicatesPage /> },
               { path: "leads/record/:id", element: <LeadDetailPage /> },
+              { path: "sales", element: <Navigate to="/sales/pipeline" replace /> },
+              { path: "sales/pipeline", element: <PipelinePage /> },
+              { path: "sales/outreach", element: <OutreachPage /> },
+              { path: "sales/follow-ups", element: <FollowUpsPage /> },
+              { path: "sales/meetings", element: <MeetingsPage /> },
+              { path: "sales/proposals", element: <ProposalsPage /> },
+              { path: "sales/proposals/:id", element: <ProposalEditorPage /> },
+              { path: "sales/deals", element: <DealsPage /> },
               { path: "settings", element: <Navigate to="/settings/profile" replace /> },
               { path: "settings/profile", element: <ProfilePage /> },
               { path: "settings/team", element: <TeamPage /> },

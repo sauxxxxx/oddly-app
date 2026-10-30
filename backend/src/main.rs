@@ -5,6 +5,7 @@ mod auth;
 mod config;
 mod error;
 mod rate_limit;
+mod reminders;
 mod routes;
 mod state;
 #[cfg(test)]
@@ -49,6 +50,7 @@ async fn main() -> anyhow::Result<()> {
 
     let bind_addr = config.bind_addr;
     let cors = cors_layer(&config.cors_allowed_origins)?;
+    reminders::spawn(db.clone());
     let state = AppState::new(config, db)?;
 
     let app = routes::router(state.clone())

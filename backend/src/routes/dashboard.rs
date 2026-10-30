@@ -323,7 +323,7 @@ pub async fn summary(
              where c.deleted_at is null
                and c.status in ('onboarding', 'active', 'awaiting_client', 'needs_attention', 'at_risk')) as active_clients,
           (select count(*) from public.proposals p
-             where p.deleted_at is null and p.status in ('ready', 'sent')) as pending_proposals,
+             where p.deleted_at is null and not p.is_template and p.status in ('ready', 'sent')) as pending_proposals,
           (select count(*) from public.deals d
              where d.deleted_at is null and d.status = 'won' and d.won_at >= $3 and d.won_at < $4) as won_deals,
           (select count(*) from public.deals d
@@ -620,7 +620,7 @@ pub async fn summary(
                     co.name as company_name, p.updated_at
              from public.proposals p
              join public.companies co on co.id = p.company_id
-             where p.deleted_at is null
+             where p.deleted_at is null and not p.is_template
              order by p.updated_at desc
              limit 6",
         )

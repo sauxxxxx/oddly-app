@@ -66,6 +66,26 @@ pub async fn cleanup(state: &AppState, actor: Uuid) {
     // Bulk/export audit rows carry no lead id; remove the ones this test run produced.
     sqlx::query("delete from public.audit_logs where actor_id = $1 and action in ('leads.exported', 'leads.bulk_updated', 'leads.merged') and created_at > now() - interval '15 minutes'")
         .bind(actor).execute(&state.db).await.expect("audit cleanup");
+    let leads = "(select l.id from public.leads l join public.companies c on c.id = l.company_id where c.name like $1)";
+    let companies = "(select id from public.companies where name like $1)";
+    let sales: Vec<String> = vec![
+        format!("delete from public.notifications where entity_id in (select id from public.follow_ups where lead_id in {leads})
+                 or entity_id in (select id from public.meetings where lead_id in {leads})"),
+        format!("delete from public.meeting_participants where meeting_id in (select id from public.meetings where lead_id in {leads})"),
+        format!("delete from public.meetings where lead_id in {leads}"),
+        format!("delete from public.follow_ups where lead_id in {leads}"),
+        format!("delete from public.lead_interactions where lead_id in {leads}"),
+        format!("delete from public.activities where entity_type = 'client' and entity_id in (select id from public.clients where company_id in {companies})"),
+        format!("delete from public.audit_logs where entity_id in (select id from public.clients where company_id in {companies})"),
+        format!("delete from public.clients where company_id in {companies}"),
+        format!("delete from public.proposals where company_id in {companies} or title like $1"),
+        format!("delete from public.deals where company_id in {companies}"),
+        "delete from public.audit_logs where entity_id in (select id from public.pipeline_stages where name like $1)".to_owned(),
+        "delete from public.pipeline_stages where name like $1".to_owned(),
+    ];
+    for sql in &sales {
+        sqlx::query(sql).bind(&pattern).execute(&state.db).await.expect(sql);
+    }
     let statements = [
         "delete from public.activities where entity_type = 'lead' and entity_id in
            (select l.id from public.leads l join public.companies c on c.id = l.company_id where c.name like $1)",
@@ -224,4 +244,142 @@ async fn smoke_leads() {
 
     cleanup(&state, user.id).await;
     eprintln!("smoke_leads: OK");
+}
+
+#[tokio::test]
+async fn smoke_sales() {
+    let Some((state, user)) = setup().await else { return };
+    cleanup(&state, user.id).await;
+    let st = || State(state.clone());
+    let u = || user.clone();
+
+    let created = to_value(
+        routes::leads::create(st(), u(), Json(de(json!({
+            "business_name": format!("{TAG} Moalboal Resort"), "market": "local", "city": "Moalboal",
+            "contact_name": "Ben Reyes", "contact_email": "ben@smoke-moalboal-resort.test",
+            "next_action": "Message on Facebook", "estimated_value": "40000", "currency": "PHP"
+        })))).await,
+    );
+    let lead_id: Uuid = de(created["lead"]["id"].clone());
+
+    // Outreach moves a new prospect to "Contacted" and stamps last contact.
+    to_value(
+        routes::sales::interactions::log(st(), u(), Path(lead_id), Json(de(json!({
+            "channel": "facebook", "body": "Sent intro message with 3 page ideas",
+            "next_action": "Wait for reply", "follow_up": { "title": "Check FB reply", "due_at": "2026-11-05T01:00:00Z" }
+        })))).await,
+    );
+    let lead = to_value(routes::leads::get(st(), u(), Path(lead_id)).await);
+    assert_eq!(lead["stage_name"], "Contacted", "{lead}");
+    assert!(lead["last_contacted_at"].is_string());
+    assert_eq!(lead["next_action"], "Wait for reply");
+    let history = to_value(routes::sales::interactions::list(st(), u(), Query(de(json!({ "lead_id": lead_id })))).await);
+    assert_eq!(history["total"], 1);
+
+    // Follow-ups: recurring completion schedules the next one.
+    let fu = to_value(
+        routes::sales::follow_ups::create(st(), u(), Json(de(json!({
+            "lead_id": lead_id, "title": format!("{TAG} weekly check-in"), "due_at": "2026-10-01T01:00:00Z", "recurrence": "weekly"
+        })))).await,
+    );
+    assert_eq!(fu["overdue"], true);
+    let fu_id: Uuid = de(fu["id"].clone());
+    crate::reminders::run_once(&state.db).await.expect("reminders");
+    let notes: i64 = sqlx::query_scalar("select count(*) from public.notifications where entity_id = $1").bind(fu_id).fetch_one(&state.db).await.unwrap();
+    assert_eq!(notes, 1, "overdue follow-up should notify once");
+    to_value(routes::sales::follow_ups::complete(st(), u(), Path(fu_id)).await);
+    let pending = to_value(routes::sales::follow_ups::list(st(), u(), Query(de(json!({ "lead_id": lead_id })))).await);
+    assert_eq!(pending["total"], 2, "next weekly occurrence + the FB follow-up: {pending}");
+
+    // Meetings.
+    let meeting = to_value(
+        routes::sales::meetings::create(st(), u(), Json(de(json!({
+            "title": format!("{TAG} Discovery call"), "starts_at": "2026-11-03T02:00:00Z", "ends_at": "2026-11-03T03:00:00Z",
+            "lead_id": lead_id, "meeting_url": "https://meet.example.test/abc", "participant_ids": [user.id],
+            "external": [{ "name": "Ben Reyes", "email": "ben@smoke-moalboal-resort.test" }]
+        })))).await,
+    );
+    assert_eq!(meeting["participants"].as_array().unwrap().len(), 2, "{meeting}");
+    let mid: Uuid = de(meeting["id"].clone());
+    let done = to_value(
+        routes::sales::meetings::update(st(), u(), Path(mid), Json(de(json!({
+            "title": format!("{TAG} Discovery call"), "starts_at": "2026-11-03T02:00:00Z", "lead_id": lead_id,
+            "status": "completed", "outcome": "Interested in social media package", "next_action": "Send proposal",
+            "participant_ids": [user.id]
+        })))).await,
+    );
+    assert_eq!(done["status"], "completed");
+    let listed = to_value(routes::sales::meetings::list(st(), u(), Query(de(json!({ "lead_id": lead_id })))).await);
+    assert_eq!(listed.as_array().unwrap().len(), 1);
+
+    // Pipeline board + drag to Interested.
+    let board = to_value(routes::sales::pipeline::board(st(), u(), Query(de(json!({ "search": TAG })))).await);
+    let interested = board.as_array().unwrap().iter().find(|c| c["name"] == "Interested").unwrap()["id"].clone();
+    to_value(routes::sales::pipeline::move_lead(st(), u(), Path(lead_id), Json(de(json!({ "stage_id": interested })))).await);
+    let board = to_value(routes::sales::pipeline::board(st(), u(), Query(de(json!({ "search": TAG })))).await);
+    let col = board.as_array().unwrap().iter().find(|c| c["name"] == "Interested").unwrap();
+    assert_eq!(col["count"], 1, "{col}");
+    assert_eq!(col["totals"]["PHP"], "40000.00");
+
+    // Deal + proposal: totals are computed server-side.
+    let deal = to_value(
+        routes::sales::deals::create(st(), u(), Json(de(json!({ "lead_id": lead_id, "title": "Social media package", "value": "20000", "currency": "PHP" })))).await,
+    );
+    let deal_id: Uuid = de(deal["id"].clone());
+    let proposal = to_value(routes::sales::proposals::create(st(), u(), Json(de(json!({ "deal_id": deal_id })))).await);
+    let pid: Uuid = de(proposal["id"].clone());
+    let saved = to_value(
+        routes::sales::proposals::save(st(), u(), Path(pid), Json(de(json!({
+            "title": format!("{TAG} Social media proposal"), "currency": "PHP", "discount_type": "percent", "discount_value": "10",
+            "tax_rate": "12", "valid_until": "2026-12-31", "introduction": "Thanks for meeting us.", "terms": "50% upfront.",
+            "items": [
+                { "name": "Social media management", "quantity": "2", "unit_price": "10000", "billing_type": "monthly", "deliverables": ["12 posts", "Monthly report"] },
+                { "name": "Brand kit", "quantity": "1", "unit_price": "0", "billing_type": "one_time", "deliverables": [] }
+            ]
+        })))).await,
+    );
+    assert_eq!(saved["subtotal"], "20000.00", "{saved}");
+    assert_eq!(saved["discount_amount"], "2000.00");
+    assert_eq!(saved["tax_amount"], "2160.00");
+    assert_eq!(saved["total"], "20160.00");
+
+    for status in ["ready", "sent", "accepted"] {
+        let r = to_value(routes::sales::proposals::set_status(st(), u(), Path(pid), Json(de(json!({ "status": status })))).await);
+        assert_eq!(r["status"], status, "{r}");
+    }
+    let detail = to_value(routes::sales::proposals::get(st(), u(), Path(pid)).await);
+    assert_eq!(detail["versions"].as_array().unwrap().len(), 1, "sending snapshots a version");
+    assert_eq!(detail["recipient"]["contact_name"], "Ben Reyes");
+    let deal = to_value(routes::sales::deals::list(st(), u(), Query(de(json!({ "lead_id": lead_id })))).await);
+    assert_eq!(deal["items"][0]["status"], "won", "{deal}");
+    assert_eq!(deal["items"][0]["value"], "20160.00");
+    // Accepted proposals can be saved as templates.
+    let tmpl = to_value(routes::sales::proposals::duplicate(st(), u(), Path(pid), Json(de(json!({ "as_template": true })))).await);
+    assert_eq!(tmpl["is_template"], true);
+    assert_eq!(tmpl["items"].as_array().unwrap().len(), 2);
+
+    // Conversion reuses the company; converting twice returns the same client.
+    let converted = to_value(
+        routes::sales::conversion::convert(st(), u(), Path(lead_id), Json(de(json!({
+            "deal_id": deal_id, "proposal_id": pid,
+            "services": [{ "name": "Social media management", "price": "10000", "currency": "PHP", "billing_type": "monthly" }]
+        })))).await,
+    );
+    assert_eq!(converted["already_client"], false);
+    let again = to_value(routes::sales::conversion::convert(st(), u(), Path(lead_id), Json(de(json!({})))).await);
+    assert_eq!(again["client_id"], converted["client_id"]);
+    let lead = to_value(routes::leads::get(st(), u(), Path(lead_id)).await);
+    assert_eq!(lead["status"], "converted");
+    assert_eq!(lead["client_id"], converted["client_id"]);
+
+    // Stage customization.
+    let stage = to_value(routes::sales::pipeline::create_stage(st(), u(), Json(de(json!({ "name": format!("{TAG} Nurture"), "color": "#14B8A6" })))).await);
+    let stage_id: Uuid = de(stage["id"].clone());
+    to_value(routes::sales::pipeline::update_stage(st(), u(), Path(stage_id), Json(de(json!({ "name": format!("{TAG} Nurturing") })))).await);
+    let new_prospect: Uuid = sqlx::query_scalar("select id from public.pipeline_stages where name = 'New Prospect'").fetch_one(&state.db).await.unwrap();
+    routes::sales::pipeline::remove_stage(st(), u(), Path(stage_id), Query(de(json!({ "move_to": new_prospect })))).await.expect("remove stage");
+
+    to_value(routes::dashboard::summary(st(), u(), Query(de(json!({})))).await);
+    cleanup(&state, user.id).await;
+    eprintln!("smoke_sales: OK");
 }
