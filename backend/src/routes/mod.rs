@@ -7,6 +7,7 @@ use crate::state::AppState;
 
 pub(crate) mod clients;
 pub(crate) mod common;
+pub(crate) mod content;
 pub(crate) mod dashboard;
 pub(crate) mod files;
 pub(crate) mod health;
@@ -14,10 +15,12 @@ pub(crate) mod leads;
 pub(crate) mod lookups;
 pub(crate) mod me;
 pub(crate) mod notifications;
+pub(crate) mod projects;
 pub(crate) mod sales;
 pub(crate) mod saved_filters;
 pub(crate) mod setup;
 pub(crate) mod team;
+pub(crate) mod websites;
 
 pub fn router(state: AppState) -> Router {
     let api = Router::new()
@@ -35,6 +38,39 @@ pub fn router(state: AppState) -> Router {
         .route("/team/members/{id}", patch(team::update_member))
         .route("/team/members/{id}/reset-password", post(team::reset_member_password))
         .route("/roles", get(team::list_roles))
+        .route("/team/workload", get(team::workload))
+        .route("/audit-log", get(team::audit_log))
+        // Projects & tasks
+        .route("/projects", get(projects::list).post(projects::create))
+        .route("/projects/templates", get(projects::templates))
+        .route("/projects/{id}", get(projects::get).put(projects::update).delete(projects::remove))
+        .route("/tasks", get(projects::tasks::list).post(projects::tasks::create))
+        .route("/tasks/{id}", get(projects::tasks::get).put(projects::tasks::update).delete(projects::tasks::remove))
+        .route("/tasks/{id}/move", post(projects::tasks::move_task))
+        .route("/tasks/{id}/subtasks", post(projects::tasks::add_subtask))
+        .route("/tasks/{id}/subtasks/{sub}", axum::routing::put(projects::tasks::update_subtask).delete(projects::tasks::remove_subtask))
+        .route("/tasks/{id}/comments", post(projects::tasks::add_comment))
+        .route("/tasks/{id}/comments/{comment}", axum::routing::delete(projects::tasks::remove_comment))
+        // Content studio
+        .route("/content", get(content::list).post(content::create))
+        .route("/content/assets", get(content::assets).post(content::add_asset))
+        .route("/content/assets/{id}", axum::routing::put(content::update_asset).delete(content::remove_asset))
+        .route("/content/stages", post(content::create_stage))
+        .route("/content/stages/reorder", post(content::reorder_stages))
+        .route("/content/stages/{id}", axum::routing::put(content::update_stage).delete(content::remove_stage))
+        .route("/content/{id}", get(content::get).put(content::update).delete(content::remove))
+        .route("/content/{id}/stage", post(content::move_stage))
+        .route("/content/{id}/review", post(content::review))
+        // Websites
+        .route("/websites", get(websites::list).post(websites::create))
+        .route("/websites/{id}", get(websites::get).put(websites::update).delete(websites::remove))
+        .route("/websites/{id}/check", post(websites::check_now))
+        .route("/websites/{id}/maintenance", post(websites::add_maintenance))
+        .route("/websites/{id}/secrets", post(websites::add_secret))
+        .route("/maintenance", get(websites::maintenance))
+        .route("/maintenance/{id}", axum::routing::put(websites::update_maintenance).delete(websites::remove_maintenance))
+        .route("/secrets/{id}", axum::routing::put(websites::update_secret).delete(websites::remove_secret))
+        .route("/secrets/{id}/reveal", post(websites::reveal_secret))
         // Lead management
         .route("/leads", get(leads::list).post(leads::create))
         .route("/leads/export", get(leads::export))

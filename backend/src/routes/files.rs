@@ -20,8 +20,10 @@ use crate::{
 };
 
 /// (view permission, manage permission) for files attached to each kind of record.
-fn permissions(entity_type: &str) -> Option<(&'static str, &'static str)> {
+/// A client's media library (bucket `media`) belongs to the content team.
+fn permissions(entity_type: &str, bucket: &str) -> Option<(&'static str, &'static str)> {
     Some(match entity_type {
+        "client" if bucket == "media" => ("content.view", "content.manage"),
         "client" | "contract" => ("clients.view", "clients.manage"),
         "lead" => ("leads.view", "leads.edit"),
         "proposal" => ("proposals.view", "proposals.manage"),
@@ -32,8 +34,8 @@ fn permissions(entity_type: &str) -> Option<(&'static str, &'static str)> {
     })
 }
 
-fn require(user: &AuthUser, entity_type: &str, write: bool) -> AppResult<()> {
-    let (view, manage) = permissions(entity_type).ok_or_else(|| AppError::BadRequest("Files can't be attached to this record.".into()))?;
+fn require(user: &AuthUser, entity_type: &str, bucket: &str, write: bool) -> AppResult<()> {
+    let (view, manage) = permissions(entity_type, bucket).ok_or_else(|| AppError::BadRequest("Files can't be attached to this record.".into()))?;
     user.require(if write { manage } else { view })
 }
 
@@ -79,7 +81,7 @@ pub struct UploadTicket {
 }
 
 pub async fn upload_url(State(state): State<AppState>, user: AuthUser, Json(req): Json<UploadRequest>) -> AppResult<Json<UploadTicket>> {
-    require(&user, &req.entity_type, true)?;
+    require(&user, &req.entity_type, &req.bucket, true)?;
     let limit = bucket_limit(&req.bucket).ok_or_else(|| AppError::BadRequest("Unknown storage bucket.".into()))?;
     let mut v = Validator::new();
     v.text("file_name", &req.file_name, 255);
@@ -134,7 +136,7 @@ pub async fn register(State(state): State<AppState>, user: AuthUser, Json(req): 
 }
 
 pub async fn register_file(state: &AppState, user: &AuthUser, req: RegisterFile) -> AppResult<FileRow> {
-    require(user, &req.entity_type, true)?;
+    require(user, &req.entity_type, &req.bucket, true)?;
     let expected_prefix = format!("{}/{}/", req.entity_type, req.entity_id);
     if !req.storage_path.starts_with(&expected_prefix) || req.storage_path.contains("..") {
         return Err(AppError::BadRequest("That upload doesn't belong to this record.".into()));
@@ -170,15 +172,19 @@ pub async fn register_file(state: &AppState, user: &AuthUser, req: RegisterFile)
 pub struct ListQuery {
     entity_type: String,
     entity_id: Uuid,
+    bucket: Option<String>,
 }
 
 pub async fn list(State(state): State<AppState>, user: AuthUser, Query(q): Query<ListQuery>) -> AppResult<Json<Vec<FileRow>>> {
-    require(&user, &q.entity_type, false)?;
+    let bucket = q.bucket.clone().unwrap_or_else(|| "documents".into());
+    require(&user, &q.entity_type, &bucket, false)?;
     let rows = sqlx::query_as::<_, FileRow>(&format!(
-        "{FILE_SELECT} where f.deleted_at is null and f.entity_type = $1::public.entity_kind and f.entity_id = $2 order by f.created_at desc"
+        "{FILE_SELECT} where f.deleted_at is null and f.entity_type = $1::public.entity_kind and f.entity_id = $2 and f.bucket = $3
+         order by f.created_at desc"
     ))
     .bind(&q.entity_type)
     .bind(q.entity_id)
+    .bind(&bucket)
     .fetch_all(&state.db)
     .await?;
     Ok(Json(rows))
@@ -222,7 +228,7 @@ pub async fn download(
     Query(q): Query<DownloadQuery>,
 ) -> AppResult<Json<SignedUrl>> {
     let f = stored(&state, id).await?;
-    require(&user, f.entity_type.as_deref().unwrap_or(""), false)?;
+    require(&user, f.entity_type.as_deref().unwrap_or(""), &f.bucket, false)?;
     let url = state
         .storage
         .signed_download_url(&f.bucket, &f.storage_path, 300, q.attachment.then_some(f.original_name.as_str()))
@@ -232,7 +238,7 @@ pub async fn download(
 
 pub async fn remove(State(state): State<AppState>, user: AuthUser, Path(id): Path<Uuid>) -> AppResult<StatusCode> {
     let f = stored(&state, id).await?;
-    require(&user, f.entity_type.as_deref().unwrap_or(""), true)?;
+    require(&user, f.entity_type.as_deref().unwrap_or(""), &f.bucket, true)?;
     sqlx::query("update public.files set deleted_at = now() where id = $1").bind(id).execute(&state.db).await?;
     state.storage.remove(&f.bucket, &[f.storage_path.clone()]).await?;
     audit::record(

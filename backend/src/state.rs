@@ -4,7 +4,7 @@ use anyhow::Context;
 use sqlx::PgPool;
 use tokio::sync::Mutex;
 
-use crate::{auth::JwtVerifier, config::Config, rate_limit::RateLimiter, storage::Storage, supabase::SupabaseAdmin};
+use crate::{auth::JwtVerifier, config::Config, rate_limit::RateLimiter, storage::Storage, supabase::SupabaseAdmin, vault::Vault};
 
 /// Shared, cheaply clonable application state.
 #[derive(Clone)]
@@ -15,6 +15,10 @@ pub struct AppState {
     pub supabase: Arc<SupabaseAdmin>,
     pub storage: Arc<Storage>,
     pub limiter: Arc<RateLimiter>,
+    /// Encrypts website credentials; `None` when SECRETS_KEY isn't set.
+    pub vault: Option<Arc<Vault>>,
+    /// HTTP client for uptime checks (no redirects, short timeout).
+    pub monitor_http: reqwest::Client,
     /// Serializes first-run owner creation.
     pub setup_lock: Arc<Mutex<()>>,
 }
@@ -32,6 +36,8 @@ impl AppState {
             supabase: Arc::new(SupabaseAdmin::new(&config, http.clone())),
             storage: Arc::new(Storage::new(&config, http)),
             limiter: Arc::new(RateLimiter::default()),
+            vault: config.secrets_key.as_deref().map(Vault::from_base64).transpose()?.map(Arc::new),
+            monitor_http: crate::monitor::http_client(),
             setup_lock: Arc::new(Mutex::new(())),
             config: Arc::new(config),
             db,

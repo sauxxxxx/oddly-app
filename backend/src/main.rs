@@ -4,6 +4,7 @@ mod audit;
 mod auth;
 mod config;
 mod error;
+mod monitor;
 mod rate_limit;
 mod reminders;
 mod routes;
@@ -13,6 +14,7 @@ mod storage;
 mod smoke_tests;
 mod supabase;
 mod validate;
+mod vault;
 
 use std::{net::SocketAddr, time::Duration};
 
@@ -53,6 +55,7 @@ async fn main() -> anyhow::Result<()> {
     let cors = cors_layer(&config.cors_allowed_origins)?;
     reminders::spawn(db.clone());
     let state = AppState::new(config, db)?;
+    monitor::spawn(state.db.clone(), state.monitor_http.clone());
 
     let app = routes::router(state.clone())
         .layer(middleware::from_fn_with_state(state, rate_limit::per_ip))

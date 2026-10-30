@@ -80,6 +80,28 @@ impl Storage {
         Ok(url)
     }
 
+    /// Signs many objects in one request (gallery previews). Missing objects are skipped.
+    pub async fn signed_urls(&self, bucket: &str, paths: &[String], seconds: u32) -> Result<std::collections::HashMap<String, String>, AppError> {
+        #[derive(Deserialize)]
+        struct Item {
+            path: Option<String>,
+            #[serde(rename = "signedURL")]
+            signed_url: Option<String>,
+        }
+        let res = self
+            .req(reqwest::Method::POST, &format!("/object/sign/{bucket}"))
+            .json(&json!({ "expiresIn": seconds, "paths": paths }))
+            .send()
+            .await
+            .context("calling Supabase Storage")?;
+        let res = check(res).await?;
+        let items: Vec<Item> = res.json().await.context("parsing signed URLs")?;
+        Ok(items
+            .into_iter()
+            .filter_map(|i| Some((i.path?, format!("{}{}", self.base, i.signed_url?))))
+            .collect())
+    }
+
     /// Metadata for one object, or None if it doesn't exist (used to verify uploads).
     pub async fn info(&self, bucket: &str, path: &str) -> Result<Option<ObjectInfo>, AppError> {
         let (prefix, name) = path.rsplit_once('/').unwrap_or(("", path));

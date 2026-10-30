@@ -333,3 +333,91 @@ fn generate_temporary_password() -> String {
     let body: String = (&mut rng).sample_iter(&Alphanumeric).take(15).map(char::from).collect();
     format!("{body}{}", rng.gen_range(0..10))
 }
+
+// ---------------------------------------------------------------------------
+// Workload & activity log
+// ---------------------------------------------------------------------------
+
+#[derive(Serialize, sqlx::FromRow)]
+pub struct Workload {
+    id: Uuid,
+    full_name: String,
+    roles: Vec<String>,
+    open_tasks: i64,
+    overdue_tasks: i64,
+    done_last_30d: i64,
+    active_leads: i64,
+    open_deals: i64,
+    won_last_30d: i64,
+    pending_follow_ups: i64,
+    open_content: i64,
+    open_maintenance: i64,
+}
+
+/// What everyone has on their plate (team.view).
+pub async fn workload(State(state): State<AppState>, user: AuthUser) -> AppResult<Json<Vec<Workload>>> {
+    user.require(perm::TEAM_VIEW)?;
+    let rows = sqlx::query_as::<_, Workload>(
+        "select p.id, p.full_name,
+           coalesce((select array_agg(r.key) from public.user_roles ur join public.roles r on r.id = ur.role_id where ur.user_id = p.id), '{}') as roles,
+           (select count(*) from public.tasks t where t.assignee_id = p.id and t.deleted_at is null and t.status <> 'done') as open_tasks,
+           (select count(*) from public.tasks t where t.assignee_id = p.id and t.deleted_at is null and t.status <> 'done' and t.due_at < now()) as overdue_tasks,
+           (select count(*) from public.tasks t where t.assignee_id = p.id and t.deleted_at is null and t.completed_at > now() - interval '30 days') as done_last_30d,
+           (select count(*) from public.leads l where l.assigned_to = p.id and l.deleted_at is null and l.status = 'active') as active_leads,
+           (select count(*) from public.deals d where d.owner_id = p.id and d.deleted_at is null and d.status = 'open') as open_deals,
+           (select count(*) from public.deals d where d.owner_id = p.id and d.deleted_at is null and d.status = 'won' and d.won_at > now() - interval '30 days') as won_last_30d,
+           (select count(*) from public.follow_ups f where f.assigned_to = p.id and f.status = 'pending') as pending_follow_ups,
+           (select count(*) from public.content_posts c join public.content_workflow_stages s on s.id = c.stage_id
+              where (c.designer_id = p.id or c.creator_id = p.id) and c.deleted_at is null and s.key not in ('published','approved','scheduled')) as open_content,
+           (select count(*) from public.website_maintenance m where m.assigned_to = p.id and m.status in ('scheduled','in_progress')) as open_maintenance
+         from public.profiles p where p.status = 'active' order by lower(p.full_name)",
+    )
+    .fetch_all(&state.db)
+    .await?;
+    Ok(Json(rows))
+}
+
+#[derive(Serialize, sqlx::FromRow)]
+pub struct AuditRow {
+    id: i64,
+    actor_name: Option<String>,
+    action: String,
+    entity_type: Option<String>,
+    entity_id: Option<Uuid>,
+    changes: Option<serde_json::Value>,
+    created_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize)]
+pub struct AuditQuery {
+    actor_id: Option<Uuid>,
+    action: Option<String>,
+    page: Option<i64>,
+}
+
+/// Security audit trail (audit.view).
+pub async fn audit_log(
+    State(state): State<AppState>,
+    user: AuthUser,
+    axum::extract::Query(q): axum::extract::Query<AuditQuery>,
+) -> AppResult<Json<crate::routes::common::Page<AuditRow>>> {
+    user.require("audit.view")?;
+    let (page, per_page, offset) = crate::routes::common::paging(q.page, Some(50), 50);
+    let action = q.action.as_deref().map(str::trim).filter(|a| !a.is_empty()).map(|a| format!("{a}%"));
+    let (items, total) = tokio::try_join!(
+        sqlx::query_as::<_, AuditRow>(
+            "select a.id, p.full_name as actor_name, a.action, a.entity_type, a.entity_id, a.changes, a.created_at
+             from public.audit_logs a left join public.profiles p on p.id = a.actor_id
+             where ($1::uuid is null or a.actor_id = $1) and ($2::text is null or a.action like $2)
+             order by a.id desc limit $3 offset $4",
+        )
+        .bind(q.actor_id).bind(&action).bind(per_page).bind(offset)
+        .fetch_all(&state.db),
+        sqlx::query_scalar::<_, i64>(
+            "select count(*) from public.audit_logs a where ($1::uuid is null or a.actor_id = $1) and ($2::text is null or a.action like $2)",
+        )
+        .bind(q.actor_id).bind(&action)
+        .fetch_one(&state.db),
+    )?;
+    Ok(Json(crate::routes::common::Page { items, total, page, per_page }))
+}

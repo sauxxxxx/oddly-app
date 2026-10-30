@@ -68,6 +68,25 @@ pub async fn cleanup(state: &AppState, actor: Uuid) {
         .bind(actor).execute(&state.db).await.expect("audit cleanup");
     let leads = "(select l.id from public.leads l join public.companies c on c.id = l.company_id where c.name like $1)";
     let companies = "(select id from public.companies where name like $1)";
+    let clients = format!("(select id from public.clients where company_id in {companies})");
+    let ops: Vec<String> = vec![
+        format!("delete from public.comments where entity_type = 'task' and entity_id in (select id from public.tasks where project_id in (select id from public.projects where client_id in {clients}))"),
+        format!("delete from public.notifications where entity_id in (select id from public.tasks where project_id in (select id from public.projects where client_id in {clients}))
+                   or entity_id in (select id from public.content_posts where client_id in {clients}) or entity_id in (select id from public.websites where client_id in {clients})"),
+        format!("delete from public.activities where entity_id in (select id from public.tasks where project_id in (select id from public.projects where client_id in {clients}))
+                   or entity_id in (select id from public.projects where client_id in {clients})"),
+        format!("delete from public.audit_logs where entity_id in (select id from public.website_secrets where website_id in (select id from public.websites where client_id in {clients}))
+                   or entity_id in (select id from public.files where entity_id in {clients})"),
+        format!("delete from public.sent_alerts s using public.websites w where w.client_id in {clients} and s.key like '%' || w.id || '%'"),
+        format!("delete from public.projects where client_id in {clients}"),
+        format!("delete from public.tasks where client_id in {clients}"),
+        format!("delete from public.content_posts where client_id in {clients}"),
+        format!("delete from public.websites where client_id in {clients}"),
+        format!("delete from public.files where entity_id in {clients}"),
+    ];
+    for sql in &ops {
+        sqlx::query(sql).bind(&pattern).execute(&state.db).await.expect(sql);
+    }
     let sales: Vec<String> = vec![
         format!("delete from public.notifications where entity_id in (select id from public.follow_ups where lead_id in {leads})
                  or entity_id in (select id from public.meetings where lead_id in {leads})"),
@@ -497,4 +516,135 @@ async fn smoke_clients() {
     sqlx::query("delete from public.audit_logs where entity_id = $1 or (action = 'file.deleted' and entity_id = $2)").bind(cid).bind(fid).execute(&state.db).await.unwrap();
     cleanup(&state, user.id).await;
     eprintln!("smoke_clients: OK");
+}
+#[tokio::test]
+async fn smoke_operations() {
+    let Some((state, user)) = setup().await else { return };
+    cleanup(&state, user.id).await;
+    let st = || State(state.clone());
+    let u = || user.clone();
+
+    let client = to_value(routes::clients::create(st(), u(), Json(de(json!({
+        "business_name": format!("{TAG} Lapu-Lapu Cafe"), "market": "local", "city": "Lapu-Lapu", "status": "active"
+    })))).await);
+    let cid: Uuid = de(client["id"].clone());
+
+    // Projects & tasks.
+    let templates = routes::projects::templates(u()).await.0;
+    assert!(templates.len() >= 4);
+    let project = to_value(routes::projects::create(st(), u(), Json(de(json!({
+        "name": format!("{TAG} Cafe website"), "client_id": cid, "template": "website", "deadline": "2026-12-15",
+        "deliverables": ["5-page website", "Google Business setup"]
+    })))).await);
+    assert_eq!(project["total_tasks"], 10, "{project}");
+    let pid: Uuid = de(project["id"].clone());
+    let tasks = to_value(routes::projects::tasks::list(st(), u(), Query(de(json!({ "project_id": pid })))).await);
+    let tid: Uuid = de(tasks[0]["id"].clone());
+    let moved = to_value(routes::projects::tasks::move_task(st(), u(), Path(tid), Json(de(json!({ "status": "in_progress", "position": 0.5 })))).await);
+    assert_eq!(moved["status"], "in_progress");
+    to_value(routes::projects::tasks::add_subtask(st(), u(), Path(tid), Json(de(json!({ "title": "Write sitemap" })))).await);
+    let with_comment = to_value(routes::projects::tasks::add_comment(st(), u(), Path(tid), Json(de(json!({ "body": "Client sent their menu PDF." })))).await);
+    assert_eq!(with_comment["subtasks"].as_array().unwrap().len(), 1);
+    assert_eq!(with_comment["comment_list"].as_array().unwrap().len(), 1);
+    let sub: Uuid = de(with_comment["subtasks"][0]["id"].clone());
+    let toggled = to_value(routes::projects::tasks::update_subtask(st(), u(), Path((tid, sub)), Json(de(json!({ "is_done": true })))).await);
+    assert_eq!(toggled["subtasks_done"], 1);
+    let mine = to_value(routes::projects::tasks::create(st(), u(), Json(de(json!({
+        "project_id": pid, "title": format!("{TAG} Send invoice"), "assignee_id": user.id, "due_at": "2026-11-02T01:00:00Z"
+    })))).await);
+    assert_eq!(mine["assignee_id"], json!(user.id));
+    let cal = to_value(routes::projects::tasks::list(st(), u(), Query(de(json!({ "due_from": "2026-11-01T00:00:00Z", "due_to": "2026-12-01T00:00:00Z", "assignee": "me" })))).await);
+    assert!(cal.as_array().unwrap().iter().any(|t| t["id"] == mine["id"]));
+
+    // Content: create -> internal review -> changes requested -> approved.
+    let post = to_value(routes::content::create(st(), u(), Json(de(json!({
+        "client_id": cid, "title": format!("{TAG} Weekend brunch promo"), "platform": "facebook", "content_type": "image",
+        "caption": "Brunch is back!", "hashtags": ["brunch", "#Cebu"], "publish_at": "2026-11-07T01:00:00Z", "designer_id": user.id
+    })))).await);
+    assert_eq!(post["hashtags"], json!(["#brunch", "#Cebu"]));
+    let post_id: Uuid = de(post["id"].clone());
+    let review_stage: Uuid = sqlx::query_scalar("select id from public.content_workflow_stages where key = 'internal_review'").fetch_one(&state.db).await.unwrap();
+    to_value(routes::content::move_stage(st(), u(), Path(post_id), Json(de(json!({ "stage_id": review_stage })))).await);
+    let queue = to_value(routes::content::list(st(), u(), Query(de(json!({ "stage_keys": "internal_review,client_approval", "client_id": cid })))).await);
+    assert_eq!(queue.as_array().unwrap().len(), 1);
+    assert!(routes::content::review(st(), u(), Path(post_id), Json(de(json!({ "decision": "changes_requested" })))).await.is_err(), "feedback required");
+    let changed = to_value(routes::content::review(st(), u(), Path(post_id), Json(de(json!({ "decision": "changes_requested", "feedback": "Use the new logo" })))).await);
+    assert_eq!(changed["stage_key"], "revision_required");
+    assert_eq!(changed["last_feedback"], "Use the new logo");
+    let approved = to_value(routes::content::review(st(), u(), Path(post_id), Json(de(json!({ "decision": "approved" })))).await);
+    assert_eq!(approved["stage_key"], "approved");
+    assert_eq!(approved["approvals"].as_array().unwrap().len(), 2);
+    let published: Uuid = sqlx::query_scalar("select id from public.content_workflow_stages where key = 'published'").fetch_one(&state.db).await.unwrap();
+    let live = to_value(routes::content::move_stage(st(), u(), Path(post_id), Json(de(json!({ "stage_id": published })))).await);
+    assert!(live["published_at"].is_string());
+
+    // Media library: real upload into the client's media bucket, signed preview.
+    let png: &[u8] = &[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
+    let ticket = to_value(routes::files::upload_url(st(), u(), Json(de(json!({
+        "bucket": "media", "entity_type": "client", "entity_id": cid, "file_name": "promo.png", "content_type": "image/png", "size_bytes": png.len()
+    })))).await);
+    let put = reqwest::Client::new().put(ticket["upload_url"].as_str().unwrap()).header("content-type", "image/png").body(png.to_vec()).send().await.unwrap();
+    assert!(put.status().is_success());
+    let file = to_value(routes::files::register(st(), u(), Json(de(json!({
+        "bucket": "media", "storage_path": ticket["storage_path"], "entity_type": "client", "entity_id": cid, "original_name": "promo.png"
+    })))).await);
+    routes::content::add_asset(st(), u(), Json(de(json!({ "client_id": cid, "file_id": file["id"], "post_id": post_id, "asset_type": "graphic", "title": "Brunch promo", "tags": ["brunch"] })))).await.expect("add asset");
+    let assets = to_value(routes::content::assets(st(), u(), Query(de(json!({ "client_id": cid, "search": "brunch" })))).await);
+    assert_eq!(assets.as_array().unwrap().len(), 1);
+    let preview = assets[0]["preview_url"].as_str().expect("signed preview url");
+    assert_eq!(&reqwest::get(preview).await.unwrap().bytes().await.unwrap()[..], png);
+    let asset_id: Uuid = de(assets[0]["id"].clone());
+    routes::content::remove_asset(st(), u(), Path(asset_id)).await.expect("remove asset");
+
+    // Websites: maintenance, vault, uptime check, SSRF guard, renewals.
+    let site = to_value(routes::websites::create(st(), u(), Json(de(json!({
+        "client_id": cid, "name": "Cafe website", "domain": "https://www.example.com/", "hosting_provider": "Hostinger",
+        "tech_stack": ["WordPress"], "domain_expires_on": (chrono::Utc::now().date_naive() + chrono::Duration::days(5)).to_string(),
+        "developer_id": user.id
+    })))).await);
+    assert_eq!(site["domain"], "example.com");
+    let wid: Uuid = de(site["id"].clone());
+    assert_eq!(site["vault_configured"], true);
+    let checked = to_value(routes::websites::check_now(st(), u(), Path(wid)).await);
+    assert_eq!(checked["checks"].as_array().unwrap().len(), 1, "{checked}");
+    routes::websites::add_maintenance(st(), u(), Path(wid), Json(de(json!({ "task_type": "plugin_update", "title": "Update plugins", "scheduled_for": "2026-11-05" })))).await.expect("maintenance");
+    let open = to_value(routes::websites::maintenance(st(), u(), Query(de(json!({ "website_id": wid })))).await);
+    let mid: Uuid = de(open[0]["id"].clone());
+    routes::websites::update_maintenance(st(), u(), Path(mid), Json(de(json!({ "task_type": "plugin_update", "title": "Update plugins", "status": "done" })))).await.expect("complete");
+    let done = to_value(routes::websites::maintenance(st(), u(), Query(de(json!({ "website_id": wid, "status": "done" })))).await);
+    assert!(done[0]["completed_at"].is_string());
+
+    let secrets = to_value(routes::websites::add_secret(st(), u(), Path(wid), Json(de(json!({ "label": "WordPress admin", "username": "cafeadmin", "secret": "S3cret-Passw0rd!" })))).await);
+    let sid: Uuid = de(secrets[0]["id"].clone());
+    let stored: Vec<u8> = sqlx::query_scalar("select secret_ciphertext from public.website_secrets where id = $1").bind(sid).fetch_one(&state.db).await.unwrap();
+    assert!(!String::from_utf8_lossy(&stored).contains("S3cret"), "database must hold ciphertext only");
+    let revealed = to_value(routes::websites::reveal_secret(st(), u(), Path(sid)).await);
+    assert_eq!(revealed["secret"], "S3cret-Passw0rd!");
+    to_value(routes::websites::update_secret(st(), u(), Path(sid), Json(de(json!({ "label": "WP admin", "username": "cafeadmin" })))).await);
+    let still = to_value(routes::websites::reveal_secret(st(), u(), Path(sid)).await);
+    assert_eq!(still["secret"], "S3cret-Passw0rd!", "editing without a new secret keeps it");
+
+    let internal = to_value(routes::websites::create(st(), u(), Json(de(json!({
+        "client_id": cid, "name": "Internal", "domain": "smoke-internal.test", "url": "http://127.0.0.1:8080/api/v1/health"
+    })))).await);
+    let internal_id: Uuid = de(internal["id"].clone());
+    let blocked = to_value(routes::websites::check_now(st(), u(), Path(internal_id)).await);
+    assert_eq!(blocked["checks"][0]["ok"], false);
+    assert!(blocked["checks"][0]["error"].as_str().unwrap().contains("Private"), "{blocked}");
+
+    crate::monitor::renewal_reminders(&state.db).await.expect("renewals");
+    let reminded: i64 = sqlx::query_scalar("select count(*) from public.notifications where entity_id = $1 and kind = 'renewal_due'").bind(wid).fetch_one(&state.db).await.unwrap();
+    assert_eq!(reminded, 1, "5 days out hits the 7-day threshold once (30-day dedupes per key)");
+    crate::monitor::renewal_reminders(&state.db).await.expect("renewals again");
+    let again: i64 = sqlx::query_scalar("select count(*) from public.notifications where entity_id = $1 and kind = 'renewal_due'").bind(wid).fetch_one(&state.db).await.unwrap();
+    assert!(again <= 2, "reminders are not repeated");
+
+    // Team.
+    let workload = to_value(routes::team::workload(st(), u()).await);
+    assert!(workload.as_array().unwrap().iter().any(|w| w["id"] == json!(user.id) && w["open_tasks"].as_i64().unwrap() >= 1));
+    let log = to_value(routes::team::audit_log(st(), u(), Query(de(json!({ "action": "secret." })))).await);
+    assert!(log["total"].as_i64().unwrap() >= 3, "{log}");
+
+    cleanup(&state, user.id).await;
+    eprintln!("smoke_operations: OK");
 }

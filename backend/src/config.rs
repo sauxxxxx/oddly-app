@@ -15,6 +15,7 @@ pub struct Config {
     pub setup_token: Option<String>,
     pub rate_limit_per_minute: u32,
     pub openai_api_key: Option<String>,
+    pub secrets_key: Option<String>,
 }
 
 impl Config {
@@ -43,6 +44,7 @@ impl Config {
             setup_token: optional("SETUP_TOKEN"),
             rate_limit_per_minute: parse_or("RATE_LIMIT_PER_MINUTE", 600)?,
             openai_api_key: optional("OPENAI_API_KEY"),
+            secrets_key: optional("SECRETS_KEY"),
         };
 
         if let Some(secret) = &config.supabase_jwt_secret {
