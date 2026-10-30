@@ -558,7 +558,7 @@ function BulkBar({ ids, onDone, listId }: { ids: string[]; onDone: () => void; l
         </Button>
       )}
       {can("leads.delete") && (
-        <Button variant="ghost" size="sm" className="text-[#fca5a5]" onClick={() => setConfirmDelete(true)}>
+        <Button variant="ghost" size="sm" className="text-danger-fg" onClick={() => setConfirmDelete(true)}>
           <Trash2 /> Delete
         </Button>
       )}

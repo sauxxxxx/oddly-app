@@ -3,6 +3,7 @@ import * as React from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
 
 import { LogoMark, Wordmark } from "@/components/brand/logo";
+import { ThemeSwitch } from "@/components/theme-switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -245,6 +246,11 @@ function UserCard({ collapsed }: { collapsed: boolean }) {
         <DropdownMenuItem onSelect={() => navigate("/settings/profile")}>
           <UserRound /> My profile
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <div className="px-2.5 py-2">
+          <p className="mb-2 text-xs text-subtle">Appearance</p>
+          <ThemeSwitch compact className="w-full justify-between" />
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem destructive onSelect={() => void signOut()}>
           <LogOut /> Sign out

@@ -106,7 +106,7 @@ export function TagInput({
   return (
     <div className={cn(controlClass, "flex h-auto min-h-10 flex-wrap items-center gap-1.5 py-1.5")}>
       {value.map((tag) => (
-        <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-xs text-[#d8b4fe]">
+        <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-xs text-accent-fg">
           {tag}
           <button type="button" aria-label={`Remove ${tag}`} onClick={() => onChange(value.filter((t) => t !== tag))} className="text-subtle hover:text-fg">
             ×

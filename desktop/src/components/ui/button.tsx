@@ -12,7 +12,7 @@ const buttonVariants = cva(
       variant: {
         primary:
           "bg-accent text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.18)] hover:bg-accent-hover active:bg-accent-strong",
-        secondary: "border border-line bg-raised text-fg hover:border-line-strong hover:bg-[#2c2c30]",
+        secondary: "border border-line bg-raised text-fg hover:border-line-strong hover:bg-raised-hover",
         ghost: "text-muted hover:bg-raised hover:text-fg",
         outline: "border border-line text-fg hover:border-line-strong hover:bg-raised",
         danger: "bg-danger text-white hover:bg-danger/90",

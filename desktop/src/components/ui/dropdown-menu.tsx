@@ -34,7 +34,7 @@ export function DropdownMenuItem({
     <Menu.Item
       className={cn(
         "flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg outline-none transition-colors data-[highlighted]:bg-raised data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted",
-        destructive && "text-[#fca5a5] [&_svg]:text-[#fca5a5]",
+        destructive && "text-danger-fg [&_svg]:text-danger-fg",
         className,
       )}
       {...props}

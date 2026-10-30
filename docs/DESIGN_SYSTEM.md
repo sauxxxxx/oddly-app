@@ -19,7 +19,17 @@ rounded sidebar panel, rounded cards with hairline borders, purple/magenta accen
 | `accent` / `magenta` | `#A855F7` / `#D946EF` | Brand, primary actions, active state, charts |
 | `success` `warning` `danger` `info` | green / yellow / red / blue | Status only, with `*-soft` backgrounds |
 
+| `text-*-fg` (`danger`, `success`, `warning`, `accent`, `info`, `magenta`) | theme-dependent | Readable text on the matching `*-soft` background (badges, alerts, overdue dates) |
+
 Radii: cards `rounded-card` (20px), controls `rounded-control` (12px). Font: Plus Jakarta Sans.
+
+## Themes
+
+Dark is the default. Light mode redefines the same tokens under `:root[data-theme="light"]`
+in `globals.css`, so components never branch on the theme. `lib/theme.ts` stores the choice
+(Dark / Light / System) per device and sets `data-theme` before the first render; the
+`color-scheme` property follows it so native controls (dropdown menus, date pickers,
+scrollbars) match. Chart colors in `chart-kit.tsx` use neutral greys that read on both.
 
 ## Rules
 

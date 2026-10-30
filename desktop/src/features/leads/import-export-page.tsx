@@ -333,9 +333,9 @@ function ImportWizard() {
                         <td className="px-3 py-2">{String(rows[i.index]?.business_name ?? "") || <span className="text-subtle">(blank)</span>}</td>
                         <td className="px-3 py-2 text-[13px]">
                           {Object.keys(i.errors).length > 0 ? (
-                            <span className="text-[#fca5a5]">{Object.values(i.errors).join(" ")}</span>
+                            <span className="text-danger-fg">{Object.values(i.errors).join(" ")}</span>
                           ) : i.duplicate ? (
-                            <span className="text-[#fde047]">
+                            <span className="text-warning-fg">
                               Matches <Link className="underline" to={`/leads/record/${i.duplicate.lead_id}`}>{i.duplicate.business_name}</Link> by {i.duplicate.matched_by}
                             </span>
                           ) : (
@@ -528,7 +528,7 @@ function SamplePreview({ rows }: { rows: Record<string, unknown>[] }) {
 }
 
 function Stat({ label, value, tone }: { label: string; value: number; tone: "success" | "warning" | "neutral" | "danger" | "accent" }) {
-  const color = { success: "text-[#86efac]", warning: "text-[#fde047]", neutral: "text-fg", danger: "text-[#fca5a5]", accent: "text-[#d8b4fe]" }[tone];
+  const color = { success: "text-success-fg", warning: "text-warning-fg", neutral: "text-fg", danger: "text-danger-fg", accent: "text-accent-fg" }[tone];
   return (
     <div className="rounded-control border border-line bg-raised/40 p-3">
       <p className={cn("text-2xl font-semibold tabular-nums", color)}>{value.toLocaleString()}</p>
@@ -658,7 +658,7 @@ function ImportHistory() {
               <td className="px-4 py-3 text-right tabular-nums text-muted">{j.skipped}</td>
               <td className="px-5 py-3 text-right tabular-nums">
                 {j.failed > 0 ? (
-                  <span className="inline-flex items-center gap-1 text-[#fca5a5]"><CircleAlert className="size-3.5" />{j.failed}</span>
+                  <span className="inline-flex items-center gap-1 text-danger-fg"><CircleAlert className="size-3.5" />{j.failed}</span>
                 ) : (
                   0
                 )}

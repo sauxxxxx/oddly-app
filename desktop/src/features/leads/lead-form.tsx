@@ -374,7 +374,7 @@ export function LeadFormDialog({
 
           {duplicates && (
             <div className="rounded-card border border-warning/30 bg-warning-soft p-4">
-              <p className="flex items-center gap-2 text-sm font-medium text-[#fde047]">
+              <p className="flex items-center gap-2 text-sm font-medium text-warning-fg">
                 <TriangleAlert className="size-4" /> This business may already be in ODDLY
               </p>
               <ul className="mt-2 flex flex-col gap-1.5 text-sm">
@@ -393,7 +393,7 @@ export function LeadFormDialog({
             </div>
           )}
 
-          <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 mt-0 border-t border-line bg-overlay px-6 py-4">
+          <DialogFooter className="sticky -bottom-6 z-10 -mx-6 -mb-6 mt-0 border-t border-line bg-overlay px-6 py-4">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

@@ -7,8 +7,9 @@ export const CHART = {
   accent: "#A855F7",
   accentLight: "#C084FC",
   magenta: "#D946EF",
-  grid: "#26262A",
-  axis: "#71717A",
+  // Neutral greys that read on both dark and light cards.
+  grid: "rgba(127,127,127,0.18)",
+  axis: "#85858f",
   categorical: ["#A855F7", "#D946EF", "#6366F1", "#F472B6", "#C084FC", "#818CF8", "#E879F9", "#71717A"],
 };
 
@@ -34,8 +35,8 @@ export function ChartDefs({ id }: { id: string }) {
         <line x1="0" y1="0" x2="0" y2="7" stroke="rgba(240,171,252,0.75)" strokeWidth="1.6" />
       </pattern>
       <pattern id={`${id}-hatch-muted`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="7" height="7" fill="rgba(255,255,255,0.03)" />
-        <line x1="0" y1="0" x2="0" y2="7" stroke="rgba(255,255,255,0.32)" strokeWidth="1.4" />
+        <rect width="7" height="7" fill="rgba(127,127,127,0.06)" />
+        <line x1="0" y1="0" x2="0" y2="7" stroke="rgba(127,127,127,0.55)" strokeWidth="1.4" />
       </pattern>
       <linearGradient id={`${id}-bar`} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stopColor={CHART.accentLight} />

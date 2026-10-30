@@ -117,7 +117,7 @@ export function ResearchPanel({ leadId }: { leadId: string }) {
             {save.isError && <p className="text-sm text-danger">{errorMessage(save.error)}</p>}
             {editable && (
               <div className="flex items-center justify-end gap-3">
-                {save.isSuccess && <span className="text-sm text-[#86efac]">Saved</span>}
+                {save.isSuccess && <span className="text-sm text-success-fg">Saved</span>}
                 <Button type="submit" loading={save.isPending}>
                   {!save.isPending && <Save />} Save research
                 </Button>

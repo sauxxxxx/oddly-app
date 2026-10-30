@@ -2,9 +2,9 @@
 @import "@fontsource-variable/plus-jakarta-sans";
 
 /*
- * ODDLY design tokens. Dark-first, charcoal surfaces, purple/magenta accents.
- * Use these via Tailwind utilities (bg-card, text-muted, border-line, …) — never raw hex
- * in components. See docs/DESIGN_SYSTEM.md.
+ * ODDLY design tokens. Dark is the default; light overrides the same variables under
+ * :root[data-theme="light"]. Use these via Tailwind utilities (bg-card, text-muted,
+ * border-line, text-danger-fg, …) — never raw hex in components. See docs/DESIGN_SYSTEM.md.
  */
 @theme {
   --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -15,6 +15,7 @@
   --color-sidebar: #191919;  /* sidebar panel */
   --color-card: #1d1d1f;     /* cards & panels */
   --color-raised: #252528;   /* inputs, chips, hover rows inside cards */
+  --color-raised-hover: #2c2c30;
   --color-overlay: #202023;  /* menus, dialogs */
 
   /* Lines */
@@ -44,6 +45,14 @@
   --color-info: #3b82f6;
   --color-info-soft: rgb(59 130 246 / 0.14);
 
+  /* Readable text on the soft status backgrounds */
+  --color-accent-fg: #d8b4fe;
+  --color-magenta-fg: #f0abfc;
+  --color-success-fg: #86efac;
+  --color-warning-fg: #fde047;
+  --color-danger-fg: #fca5a5;
+  --color-info-fg: #93c5fd;
+
   /* Shape */
   --radius-card: 1.25rem;
   --radius-control: 0.75rem;
@@ -62,6 +71,61 @@
     from { opacity: 0; transform: translateY(4px) scale(0.98); }
     to { opacity: 1; transform: none; }
   }
+}
+
+/* Light theme: same tokens, light values. */
+:root[data-theme="light"] {
+  --color-canvas: #e9ebef;
+  --color-base: #f6f7f9;
+  --color-sidebar: #ffffff;
+  --color-card: #ffffff;
+  --color-raised: #f1f2f5;
+  --color-raised-hover: #e7e8ec;
+  --color-overlay: #ffffff;
+
+  --color-line: #e4e4e7;
+  --color-line-strong: #d0d0d6;
+
+  --color-fg: #18181b;
+  --color-muted: #52525b;
+  --color-subtle: #757580;
+
+  --color-accent: #9333ea;
+  --color-accent-hover: #a855f7;
+  --color-accent-strong: #7e22ce;
+  --color-magenta: #c026d3;
+  --color-accent-soft: rgb(147 51 234 / 0.1);
+  --color-magenta-soft: rgb(192 38 211 / 0.1);
+
+  --color-success: #16a34a;
+  --color-success-soft: rgb(22 163 74 / 0.1);
+  --color-warning: #ca8a04;
+  --color-warning-soft: rgb(202 138 4 / 0.12);
+  --color-danger: #dc2626;
+  --color-danger-soft: rgb(220 38 38 / 0.09);
+  --color-info: #2563eb;
+  --color-info-soft: rgb(37 99 235 / 0.09);
+
+  --color-accent-fg: #7e22ce;
+  --color-magenta-fg: #a21caf;
+  --color-success-fg: #15803d;
+  --color-warning-fg: #a16207;
+  --color-danger-fg: #b91c1c;
+  --color-info-fg: #1d4ed8;
+
+  --shadow-card: 0 1px 2px 0 rgb(24 24 27 / 0.04), 0 8px 24px -16px rgb(24 24 27 / 0.12);
+  --shadow-pop: 0 16px 48px -12px rgb(24 24 27 / 0.22);
+
+  --hatch-line: rgb(24 24 27 / 0.18);
+  --scrollbar: #c9c9d0;
+  color-scheme: light;
+}
+
+:root {
+  --hatch-line: rgb(255 255 255 / 0.22);
+  --scrollbar: #2e2e33;
+  /* Native controls (select menus, date pickers, scrollbars) follow the theme. */
+  color-scheme: dark;
 }
 
 @layer base {
@@ -87,36 +151,40 @@
     outline-offset: 2px;
   }
 
-  /* Quiet scrollbars that match the dark surfaces */
+  /* Dropdown options are drawn by the OS; give them the theme's colors explicitly. */
+  select option,
+  select optgroup {
+    background-color: var(--color-overlay);
+    color: var(--color-fg);
+  }
+
+  /* Quiet scrollbars that match the surfaces */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #34343a transparent;
+    scrollbar-color: var(--scrollbar) transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   *::-webkit-scrollbar-thumb {
-    background: #2e2e33;
+    background: var(--scrollbar);
     border-radius: 999px;
     border: 3px solid transparent;
     background-clip: content-box;
   }
 
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7);
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
+    opacity: 0.7;
   }
 }
 
 @layer components {
   /* Diagonal hatching used for secondary series, as in the reference design. */
   .hatch {
-    background-image: repeating-linear-gradient(
-      135deg,
-      rgb(255 255 255 / 0.22) 0 1.5px,
-      transparent 1.5px 6px
-    );
+    background-image: repeating-linear-gradient(135deg, var(--hatch-line) 0 1.5px, transparent 1.5px 6px);
   }
 }
 

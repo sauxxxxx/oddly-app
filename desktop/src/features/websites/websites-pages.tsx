@@ -514,7 +514,7 @@ function MaintenanceDialog({ item, onClose, onSave, onDelete }: { item?: Mainten
             <Field label="Notes" htmlFor="mt-notes" className="col-span-2"><Textarea id="mt-notes" rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></Field>
           </div>
           <DialogFooter>
-            {onDelete && <Button type="button" variant="ghost" className="mr-auto text-[#fca5a5]" onClick={() => void run(onDelete)}><Trash2 /> Delete</Button>}
+            {onDelete && <Button type="button" variant="ghost" className="mr-auto text-danger-fg" onClick={() => void run(onDelete)}><Trash2 /> Delete</Button>}
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
             <Button type="submit" loading={busy}>Save</Button>
           </DialogFooter>

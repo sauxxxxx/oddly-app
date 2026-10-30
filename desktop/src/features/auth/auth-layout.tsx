@@ -75,8 +75,8 @@ export function FormAlert({ children, tone = "danger" }: { children: React.React
       role="alert"
       className={
         tone === "danger"
-          ? "rounded-control border border-danger/25 bg-danger-soft px-3.5 py-2.5 text-[13px] text-[#fca5a5]"
-          : "rounded-control border border-info/25 bg-info-soft px-3.5 py-2.5 text-[13px] text-[#93c5fd]"
+          ? "rounded-control border border-danger/25 bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger-fg"
+          : "rounded-control border border-info/25 bg-info-soft px-3.5 py-2.5 text-[13px] text-info-fg"
       }
     >
       {children}

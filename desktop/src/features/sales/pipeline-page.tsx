@@ -188,7 +188,7 @@ function PipelineCardView({ card, onDragStart, onDragEnd }: { card: PipelineCard
       </div>
       <p className="mt-0.5 truncate text-xs text-subtle">{[card.contact_name, card.city].filter(Boolean).join(" · ") || "—"}</p>
       {card.next_action && (
-        <p className={cn("mt-2 flex items-center gap-1.5 text-xs", overdue ? "text-[#fca5a5]" : "text-muted")}>
+        <p className={cn("mt-2 flex items-center gap-1.5 text-xs", overdue ? "text-danger-fg" : "text-muted")}>
           <CalendarClock className="size-3 shrink-0" />
           <span className="truncate">{card.next_action}</span>
           {card.next_action_due_at && <span className="shrink-0 text-subtle">· {formatDate(card.next_action_due_at, me.timezone)}</span>}

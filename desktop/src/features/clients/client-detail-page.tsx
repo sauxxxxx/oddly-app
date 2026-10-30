@@ -213,7 +213,7 @@ function Onboarding({ client: c }: { client: ClientDetail }) {
                 </li>
               ))}
             </ul>
-            {done === c.onboarding.length && c.status === "onboarding" && <p className="mt-3 text-xs text-[#86efac]">All done — the client is now active.</p>}
+            {done === c.onboarding.length && c.status === "onboarding" && <p className="mt-3 text-xs text-success-fg">All done — the client is now active.</p>}
           </>
         )}
       </CardBody>
@@ -375,7 +375,7 @@ function ContactDialog({
           </div>
           <label className="flex items-center gap-2.5 text-sm text-muted"><Checkbox checked={f.is_primary} onChange={(v) => setF({ ...f, is_primary: v })} label="Primary contact" /> Primary contact</label>
           <DialogFooter>
-            {onDelete && <Button type="button" variant="ghost" className="mr-auto text-[#fca5a5]" onClick={() => void run(onDelete)}><Trash2 /> Remove</Button>}
+            {onDelete && <Button type="button" variant="ghost" className="mr-auto text-danger-fg" onClick={() => void run(onDelete)}><Trash2 /> Remove</Button>}
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" loading={busy}>Save</Button>
           </DialogFooter>
@@ -520,7 +520,7 @@ function ServiceDialog({
           </div>
           <Field label="Notes" htmlFor="sv-notes"><Textarea id="sv-notes" rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></Field>
           <DialogFooter>
-            {onDelete && <Button type="button" variant="ghost" className="mr-auto text-[#fca5a5]" onClick={() => void run(onDelete)}><Trash2 /> Remove</Button>}
+            {onDelete && <Button type="button" variant="ghost" className="mr-auto text-danger-fg" onClick={() => void run(onDelete)}><Trash2 /> Remove</Button>}
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" loading={busy}>Save</Button>
           </DialogFooter>

@@ -102,7 +102,7 @@ export function PostDialog({
             <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); submit(); }}>
               {save.isError && !(save.error instanceof ApiError && save.error.code === "validation_failed") && <FormAlert>{errorMessage(save.error)}</FormAlert>}
               {post.data?.last_feedback && post.data.stage_key === "revision_required" && (
-                <div className="rounded-control border border-warning/30 bg-warning-soft p-3 text-sm text-[#fde047]">Changes requested: {post.data.last_feedback}</div>
+                <div className="rounded-control border border-warning/30 bg-warning-soft p-3 text-sm text-warning-fg">Changes requested: {post.data.last_feedback}</div>
               )}
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Client" htmlFor="ps-client" error={errors.client_id}>
@@ -152,7 +152,7 @@ export function PostDialog({
               </div>
               {editable && (
                 <div className="flex justify-end gap-2">
-                  {postId && <Button type="button" variant="ghost" className="mr-auto text-[#fca5a5]" onClick={() => setDeleting(true)}><Trash2 /> Delete</Button>}
+                  {postId && <Button type="button" variant="ghost" className="mr-auto text-danger-fg" onClick={() => setDeleting(true)}><Trash2 /> Delete</Button>}
                   <Button type="submit" loading={save.isPending}>{postId ? "Save" : "Create post"}</Button>
                 </div>
               )}

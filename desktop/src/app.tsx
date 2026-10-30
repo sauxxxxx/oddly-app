@@ -143,7 +143,7 @@ export function App() {
 function MissingConfig({ keys }: { keys: string[] }) {
   return (
     <AuthLayout title="ODDLY isn't configured yet" subtitle="This build is missing settings it needs to connect.">
-      <div className="flex gap-3 rounded-card border border-warning/25 bg-warning-soft p-4 text-sm text-[#fde047]">
+      <div className="flex gap-3 rounded-card border border-warning/25 bg-warning-soft p-4 text-sm text-warning-fg">
         <TriangleAlert className="mt-0.5 size-5 shrink-0" />
         <div>
           <p>

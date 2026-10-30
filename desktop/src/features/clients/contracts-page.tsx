@@ -86,7 +86,7 @@ export function ContractsTable({ clientId, expiringDays, status, showClient }: {
                     {` · ${k.documents} document${k.documents === 1 ? "" : "s"}`}
                   </p>
                 </div>
-                {ending && <span className={cn("text-xs", k.days_left! <= 7 ? "text-[#fca5a5]" : "text-[#fde047]")}>Ends in {k.days_left} day{k.days_left === 1 ? "" : "s"}</span>}
+                {ending && <span className={cn("text-xs", k.days_left! <= 7 ? "text-danger-fg" : "text-warning-fg")}>Ends in {k.days_left} day{k.days_left === 1 ? "" : "s"}</span>}
                 <span className="text-sm tabular-nums text-muted">{k.value ? formatMoney(k.value, k.currency) : "—"}</span>
                 <Badge tone={TONE[k.status]} dot>{humanize(k.status)}</Badge>
                 {can("clients.manage") && (

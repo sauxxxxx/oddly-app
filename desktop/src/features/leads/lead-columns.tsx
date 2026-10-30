@@ -73,7 +73,7 @@ export function leadColumns(timeZone: string): Column<Lead>[] {
           <div className="max-w-[220px]">
             <p className="truncate text-[13px] text-muted">{l.next_action ?? "—"}</p>
             {l.next_action_due_at && (
-              <p className={overdue ? "text-xs text-[#fca5a5]" : "text-xs text-subtle"}>
+              <p className={overdue ? "text-xs text-danger-fg" : "text-xs text-subtle"}>
                 {overdue ? "Overdue · " : ""}
                 {formatDate(l.next_action_due_at, timeZone)}
               </p>

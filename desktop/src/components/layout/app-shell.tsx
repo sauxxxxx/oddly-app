@@ -1,9 +1,11 @@
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Moon, Search, Sun } from "lucide-react";
 import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router";
 
+import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/misc";
 import { ALL_MODULES } from "@/config/navigation";
+import { useTheme } from "@/lib/theme";
 import { safeStorage } from "@/lib/utils";
 
 import { CommandPalette, shortcutLabel } from "./command-palette";
@@ -62,6 +64,7 @@ export function AppShell() {
               <span className="flex-1 text-left">Jump to…</span>
               <Kbd>{shortcutLabel}</Kbd>
             </button>
+            <ThemeToggle />
             <NotificationBell />
           </div>
         </header>
@@ -75,6 +78,24 @@ export function AppShell() {
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
+  );
+}
+
+/** One-click dark/light switch (System is in the account menu and My Profile). */
+function ThemeToggle() {
+  const { preference, setPreference } = useTheme();
+  const isLight = document.documentElement.dataset.theme === "light";
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+      title={isLight ? "Dark mode" : "Light mode"}
+      onClick={() => setPreference(isLight ? "dark" : "light")}
+      data-preference={preference}
+    >
+      {isLight ? <Moon /> : <Sun />}
+    </Button>
   );
 }
 

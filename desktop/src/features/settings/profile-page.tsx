@@ -3,6 +3,7 @@ import { Check, KeyRound, Save } from "lucide-react";
 import * as React from "react";
 
 import { PageHeader } from "@/components/layout/app-shell";
+import { ThemeSwitch } from "@/components/theme-switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -29,7 +30,13 @@ export function ProfilePage() {
       <PageHeader title="My profile" description="Your details and sign-in settings." />
       <div className="grid max-w-5xl grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <DetailsCard />
-        <PasswordCard />
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader title="Appearance" description="Saved on this device. System follows your Windows setting." />
+            <CardBody><ThemeSwitch /></CardBody>
+          </Card>
+          <PasswordCard />
+        </div>
       </div>
     </>
   );
@@ -122,7 +129,7 @@ function DetailsCard() {
           </Field>
           <div className="flex items-center justify-end gap-3 md:col-span-2">
             {save.isSuccess && !dirty && (
-              <span className="flex items-center gap-1.5 text-sm text-[#86efac]">
+              <span className="flex items-center gap-1.5 text-sm text-success-fg">
                 <Check className="size-4" /> Saved
               </span>
             )}

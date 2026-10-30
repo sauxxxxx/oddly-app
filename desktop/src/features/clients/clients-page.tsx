@@ -348,7 +348,7 @@ export function ClientFormDialog({
             <Field label="Billing notes" htmlFor="cl-billing_notes" className="col-span-2"><Input {...bind("billing_notes")} placeholder="e.g. Pays by GCash on the 5th" /></Field>
             <Field label="Notes" htmlFor="cl-notes" className="col-span-2"><Textarea {...bind("notes")} rows={3} /></Field>
           </div>
-          <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 mt-0 border-t border-line bg-overlay px-6 py-4">
+          <DialogFooter className="sticky -bottom-6 z-10 -mx-6 -mb-6 mt-0 border-t border-line bg-overlay px-6 py-4">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" loading={create.isPending || update.isPending}>{client ? "Save" : "Add client"}</Button>
           </DialogFooter>

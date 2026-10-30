@@ -26,7 +26,7 @@ export function RequireAuth() {
       >
         {blocked ? (
           <div className="flex flex-col gap-5">
-            <div className="flex gap-3 rounded-card border border-warning/25 bg-warning-soft p-4 text-sm text-[#fde047]">
+            <div className="flex gap-3 rounded-card border border-warning/25 bg-warning-soft p-4 text-sm text-warning-fg">
               <ShieldAlert className="mt-0.5 size-5 shrink-0" />
               <p>{(meError as ApiError).message}</p>
             </div>

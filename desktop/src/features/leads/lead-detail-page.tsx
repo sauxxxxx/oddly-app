@@ -267,7 +267,7 @@ function Summary({ lead: l }: { lead: LeadDetail }) {
           <p className="text-xs font-medium uppercase tracking-[0.08em] text-subtle">Next action</p>
           <p className="mt-2 text-[15px] font-medium text-fg">{l.next_action ?? "None set"}</p>
           {l.next_action_due_at && (
-            <p className={overdue ? "mt-1 text-sm text-[#fca5a5]" : "mt-1 text-sm text-muted"}>
+            <p className={overdue ? "mt-1 text-sm text-danger-fg" : "mt-1 text-sm text-muted"}>
               {overdue ? "Overdue · " : "Due "}
               {formatDate(l.next_action_due_at, me.timezone, { weekday: "short", month: "short", day: "numeric" })}{" "}
               {formatTime(l.next_action_due_at, me.timezone)}

@@ -192,7 +192,7 @@ export function ContentPlannerPage() {
                         <p className="text-sm font-medium leading-snug">{p.title}</p>
                         <p className="mt-0.5 truncate text-xs text-subtle">{p.client_name} · {PLATFORM_LABELS[p.platform]}</p>
                         {p.publish_at && <p className="mt-1.5 text-xs text-muted">Publishes {formatRelative(p.publish_at)}</p>}
-                        {p.last_feedback && s.key === "revision_required" && <p className="mt-1.5 line-clamp-2 text-xs text-[#fde047]">{p.last_feedback}</p>}
+                        {p.last_feedback && s.key === "revision_required" && <p className="mt-1.5 line-clamp-2 text-xs text-warning-fg">{p.last_feedback}</p>}
                       </article>
                     ))}
                     {cards.length === 0 && <p className="px-2 py-6 text-center text-xs text-subtle">Empty</p>}

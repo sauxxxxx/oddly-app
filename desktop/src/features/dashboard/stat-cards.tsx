@@ -17,7 +17,7 @@ function Delta({ current, previous }: { current: number; previous: number }) {
       <span
         className={cn(
           "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium",
-          up ? "bg-success-soft text-[#86efac]" : "bg-danger-soft text-[#fca5a5]",
+          up ? "bg-success-soft text-success-fg" : "bg-danger-soft text-danger-fg",
         )}
       >
         {up ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}

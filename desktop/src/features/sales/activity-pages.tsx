@@ -194,7 +194,7 @@ export function FollowUpRow({ item: f, showOwner }: { item: FollowUp; showOwner?
         <p className="truncate text-xs text-subtle">
           {related ? <Link to={related} className="hover:underline">{f.related_name ?? "Record"}</Link> : "General"}
           {" · "}
-          <span className={f.overdue ? "text-[#fca5a5]" : undefined}>
+          <span className={f.overdue ? "text-danger-fg" : undefined}>
             {f.status === "done" && f.completed_at ? `done ${formatRelative(f.completed_at)}` : `${formatDate(f.due_at, me.timezone, { weekday: "short", month: "short", day: "numeric" })} ${formatTime(f.due_at, me.timezone)}`}
           </span>
           {showOwner && f.assigned_name && ` · ${f.assigned_name}`}

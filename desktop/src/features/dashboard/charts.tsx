@@ -84,7 +84,7 @@ export function LeadAcquisitionChart({ data }: Props) {
               />
               <YAxis {...axisProps} allowDecimals={false} width={44} />
               <Tooltip
-                cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                cursor={{ fill: "rgba(127,127,127,0.08)" }}
                 content={(p) => (
                   <ChartTooltip active={p.active} payload={p.payload} label={p.label} labelFormatter={(b) => bucketLabel(b, unit)} valueFormatter={formatNumber} />
                 )}
@@ -371,7 +371,7 @@ export function ClientGrowthChart({ data }: Props) {
               <XAxis dataKey="bucket" {...axisProps} tickFormatter={(b: string) => bucketLabel(b, unit)} minTickGap={18} />
               <YAxis {...axisProps} allowDecimals={false} width={44} />
               <Tooltip
-                cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                cursor={{ fill: "rgba(127,127,127,0.08)" }}
                 content={(p) => <ChartTooltip active={p.active} payload={p.payload} label={p.label} labelFormatter={(b) => bucketLabel(b, unit)} valueFormatter={formatNumber} />}
               />
               <Bar dataKey="new_clients" name="New" fill={`url(#${id}-hatch)`} radius={[6, 6, 0, 0]} maxBarSize={28} />

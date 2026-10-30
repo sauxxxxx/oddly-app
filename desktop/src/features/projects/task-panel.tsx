@@ -132,7 +132,7 @@ export function TaskDialog({
               </Field>
               {editable && (
                 <div className="col-span-2 flex justify-end gap-2">
-                  {taskId && <Button type="button" variant="ghost" className="mr-auto text-[#fca5a5]" onClick={() => setDeleting(true)}><Trash2 /> Delete</Button>}
+                  {taskId && <Button type="button" variant="ghost" className="mr-auto text-danger-fg" onClick={() => setDeleting(true)}><Trash2 /> Delete</Button>}
                   <Button type="submit" loading={save.isPending}>{taskId ? "Save" : "Create task"}</Button>
                 </div>
               )}
@@ -237,7 +237,7 @@ export function TaskList({ tasks, onOpen, showProject = true }: { tasks: Task[];
               </p>
             </div>
             {t.due_at && (
-              <span className={cn("flex items-center gap-1 whitespace-nowrap text-xs", t.overdue ? "text-[#fca5a5]" : "text-subtle")}>
+              <span className={cn("flex items-center gap-1 whitespace-nowrap text-xs", t.overdue ? "text-danger-fg" : "text-subtle")}>
                 <CalendarClock className="size-3" /> {formatDate(t.due_at, me.timezone)}
               </span>
             )}

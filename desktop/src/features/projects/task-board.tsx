@@ -74,7 +74,7 @@ export function TaskBoard({ tasks, onOpen }: { tasks: Task[]; onOpen: (id: strin
                         <PriorityBadge priority={t.priority} />
                         <div className="flex items-center gap-2 text-xs text-subtle">
                           {t.comments > 0 && <span className="flex items-center gap-0.5"><MessageSquare className="size-3" />{t.comments}</span>}
-                          {t.due_at && <span className={cn("flex items-center gap-0.5", t.overdue && "text-[#fca5a5]")}><CalendarClock className="size-3" />{formatDate(t.due_at, me.timezone)}</span>}
+                          {t.due_at && <span className={cn("flex items-center gap-0.5", t.overdue && "text-danger-fg")}><CalendarClock className="size-3" />{formatDate(t.due_at, me.timezone)}</span>}
                           {t.assignee_name && <Avatar name={t.assignee_name} className="size-6 text-[9px] ring-0" />}
                         </div>
                       </div>

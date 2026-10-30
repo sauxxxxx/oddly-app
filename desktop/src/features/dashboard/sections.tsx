@@ -119,7 +119,7 @@ export function UpcomingFollowUps({ data }: Props) {
                   <p className="truncate text-sm font-medium">{f.title}</p>
                   <p className="truncate text-xs text-subtle">
                     {f.related_name ?? "General"} ·{" "}
-                    <span className={f.overdue ? "text-[#fca5a5]" : undefined}>
+                    <span className={f.overdue ? "text-danger-fg" : undefined}>
                       {f.overdue ? "Overdue, " : ""}
                       {formatDate(f.due_at, me.timezone)} {formatTime(f.due_at, me.timezone)}
                     </span>
@@ -160,7 +160,7 @@ export function MyTasks({ data }: Props) {
                   <p className="truncate text-xs text-subtle">
                     {t.project_name ?? "No project"}
                     {t.due_at && (
-                      <span className={t.overdue ? "text-[#fca5a5]" : undefined}> · due {formatDate(t.due_at, me.timezone)}</span>
+                      <span className={t.overdue ? "text-danger-fg" : undefined}> · due {formatDate(t.due_at, me.timezone)}</span>
                     )}
                   </p>
                 </div>

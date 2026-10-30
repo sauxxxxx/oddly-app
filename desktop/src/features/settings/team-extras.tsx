@@ -56,7 +56,7 @@ export function WorkloadCard() {
                       </div>
                     </td>
                     {cols.map(([key, label]) => (
-                      <td key={label} className={cn("px-3 py-3 text-right tabular-nums", key === "overdue_tasks" && w.overdue_tasks > 0 ? "text-[#fca5a5]" : "text-muted")}>{w[key] as number}</td>
+                      <td key={label} className={cn("px-3 py-3 text-right tabular-nums", key === "overdue_tasks" && w.overdue_tasks > 0 ? "text-danger-fg" : "text-muted")}>{w[key] as number}</td>
                     ))}
                   </tr>
                 ))}

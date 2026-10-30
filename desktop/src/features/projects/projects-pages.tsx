@@ -93,7 +93,7 @@ export function ProjectCard({ project: p, onClick }: { project: Project; onClick
       </div>
       <div>
         <div className="mb-1.5 flex justify-between text-xs text-subtle">
-          <span>{p.done_tasks}/{p.total_tasks} tasks{p.overdue_tasks > 0 && <span className="text-[#fca5a5]"> · {p.overdue_tasks} overdue</span>}</span>
+          <span>{p.done_tasks}/{p.total_tasks} tasks{p.overdue_tasks > 0 && <span className="text-danger-fg"> · {p.overdue_tasks} overdue</span>}</span>
           <span className="tabular-nums">{Math.round(pct)}%</span>
         </div>
         <Progress value={pct} />
@@ -467,7 +467,7 @@ export function TaskCalendarPage() {
                   onClick={() => open(t.id)}
                   className={cn(
                     "w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] transition-colors",
-                    t.status === "done" ? "bg-success-soft text-[#86efac] line-through" : t.overdue ? "bg-danger-soft text-[#fca5a5]" : "bg-accent-soft text-[#e9d5ff] hover:bg-accent/30",
+                    t.status === "done" ? "bg-success-soft text-success-fg line-through" : t.overdue ? "bg-danger-soft text-danger-fg" : "bg-accent-soft text-accent-fg hover:bg-accent/30",
                   )}
                   title={`${t.title}${t.assignee_name ? ` · ${t.assignee_name}` : ""}`}
                 >
