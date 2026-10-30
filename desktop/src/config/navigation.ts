@@ -269,6 +269,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "My Profile", path: "/settings/profile" },
           { label: "Team Members", path: "/settings/team", permission: "team.view" },
           { label: "Roles & Permissions", path: "/settings/roles", permission: "team.view" },
+          { label: "Activity Log", path: "/settings/activity", permission: "audit.view" },
           { label: "Services & Packages", path: "/settings/services", permission: "settings.manage" },
           { label: "Integrations", path: "/settings/integrations", permission: "settings.manage" },
           { label: "System Preferences", path: "/settings/preferences", permission: "settings.manage" },

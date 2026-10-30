@@ -22,6 +22,8 @@ import { api, ApiError, errorMessage } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import type { CreatedMember, Role, TeamMember } from "@/types/api";
 
+import { WorkloadCard } from "./team-extras";
+
 const MEMBERS_KEY = ["team", "members"];
 export const ROLES_KEY = ["team", "roles"];
 
@@ -108,6 +110,7 @@ export function TeamPage() {
         />
       )}
 
+      <WorkloadCard />
       <TemporaryPasswordDialog secret={secret} onClose={() => setSecret(null)} />
     </>
   );

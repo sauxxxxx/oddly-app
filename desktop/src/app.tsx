@@ -15,6 +15,7 @@ import { ClientDetailPage } from "@/features/clients/client-detail-page";
 import { ClientHistoryPage, ClientProfilesPage, ClientsPage } from "@/features/clients/clients-page";
 import { ContractsPage } from "@/features/clients/contracts-page";
 import { ServicesCatalogPage } from "@/features/clients/services-page";
+import { ApprovalsPage, CaptionsPage, ContentCalendarPage, ContentPlannerPage, MediaLibraryPage, PublishedPage } from "@/features/content/content-pages";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { DuplicatesPage } from "@/features/leads/duplicates-page";
 import { ImportExportPage } from "@/features/leads/import-export-page";
@@ -22,6 +23,8 @@ import { LeadDetailPage } from "@/features/leads/lead-detail-page";
 import { LeadListDetailPage, LeadListsPage } from "@/features/leads/lead-lists-page";
 import { LeadsPage } from "@/features/leads/leads-page";
 import { LeadResearchPage } from "@/features/leads/research-page";
+import { registerClientOpsExtensions } from "@/features/ops/client-extensions";
+import { MyTasksPage, ProjectDetailPage, ProjectsPage, TaskBoardPage, TaskCalendarPage, TeamTasksPage } from "@/features/projects/projects-pages";
 import { ModuleRoadmapPage } from "@/features/roadmap/module-roadmap-page";
 import { FollowUpsPage, MeetingsPage, OutreachPage } from "@/features/sales/activity-pages";
 import { DealsPage } from "@/features/sales/deals-page";
@@ -31,11 +34,14 @@ import { ProposalEditorPage } from "@/features/sales/proposal-editor-page";
 import { ProposalsPage } from "@/features/sales/proposals-page";
 import { ProfilePage } from "@/features/settings/profile-page";
 import { RolesPage } from "@/features/settings/roles-page";
+import { AuditLogPage } from "@/features/settings/team-extras";
 import { TeamPage } from "@/features/settings/team-page";
+import { DomainsPage, HostingPage, MaintenancePage, MonitoringPage, WebsiteDetailPage, WebsitesPage } from "@/features/websites/websites-pages";
 import { ApiError } from "@/lib/api";
 import { missingEnv } from "@/lib/env";
 
 registerLeadSalesExtensions();
+registerClientOpsExtensions();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,6 +93,26 @@ const router = createHashRouter([
               { path: "clients/history", element: <ClientHistoryPage /> },
               { path: "clients/record/:id", element: <ClientDetailPage /> },
               { path: "settings/services", element: <ServicesCatalogPage /> },
+              { path: "settings/activity", element: <AuditLogPage /> },
+              { path: "projects", element: <ProjectsPage /> },
+              { path: "projects/record/:id", element: <ProjectDetailPage /> },
+              { path: "projects/my-tasks", element: <MyTasksPage /> },
+              { path: "projects/team-tasks", element: <TeamTasksPage /> },
+              { path: "projects/board", element: <TaskBoardPage /> },
+              { path: "projects/calendar", element: <TaskCalendarPage /> },
+              { path: "content", element: <Navigate to="/content/calendar" replace /> },
+              { path: "content/calendar", element: <ContentCalendarPage /> },
+              { path: "content/planner", element: <ContentPlannerPage /> },
+              { path: "content/media", element: <MediaLibraryPage /> },
+              { path: "content/captions", element: <CaptionsPage /> },
+              { path: "content/approvals", element: <ApprovalsPage /> },
+              { path: "content/published", element: <PublishedPage /> },
+              { path: "websites", element: <WebsitesPage /> },
+              { path: "websites/record/:id", element: <WebsiteDetailPage /> },
+              { path: "websites/maintenance", element: <MaintenancePage /> },
+              { path: "websites/domains", element: <DomainsPage /> },
+              { path: "websites/hosting", element: <HostingPage /> },
+              { path: "websites/monitoring", element: <MonitoringPage /> },
               { path: "settings", element: <Navigate to="/settings/profile" replace /> },
               { path: "settings/profile", element: <ProfilePage /> },
               { path: "settings/team", element: <TeamPage /> },

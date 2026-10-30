@@ -17,10 +17,18 @@ Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) first. Also: [`docs/DATABASE
 
 ## Status
 
-**Phase 1 — Foundation** is built: Supabase schema for every module, Supabase sign-in,
-first-run owner setup, team members & roles, the app shell (collapsible sidebar, Ctrl+K
-search, notifications) and a live dashboard. Modules from Phase 2 onward show a roadmap page
-until they are built — no fake data.
+| Phase | Status |
+|---|---|
+| 1 Foundation — schema, auth, team & roles, shell, dashboard | Done |
+| 2 Lead Management — leads, filters, saved filters, bulk actions, XLSX/CSV import & export, duplicates & merge, lead lists, research | Done |
+| 3 CRM & Sales — pipeline board, custom stages, outreach log, follow-ups & reminders, meetings, deals, proposals (versions, templates, PDF), lead → client conversion | Done |
+| 4 Clients — client workspace, contacts, onboarding checklist, services, contracts & documents, service catalog, history | Done |
+| 5 Agency Operations — projects & tasks (templates, Kanban, calendar), content studio (workflow, approvals, captions, media library), websites (maintenance, encrypted credentials, uptime monitoring, renewal reminders), team workload, activity log | Done |
+| 6 Analytics & AI | Not started (roadmap pages) |
+| 7 Production readiness | Not started |
+
+Background jobs in the API: follow-up and meeting reminders (every 5 min), uptime checks and
+renewal reminders for domains, hosting, SSL and contracts (every 10 min).
 
 ## Prerequisites
 
@@ -50,8 +58,24 @@ Fill in `backend/.env` (each value is explained in the file):
 - `SUPABASE_URL` and `SUPABASE_SECRET_KEY` — Project Settings → API Keys (secret / service_role)
 - `SUPABASE_JWT_SECRET` — only if your project still uses the legacy JWT secret
 
+- `SECRETS_KEY` — encrypts stored website credentials (32 random bytes, base64:
+  `openssl rand -base64 32`). **Back it up somewhere safe**: without it, stored credentials
+  can't be read. Without it set, the credential vault is simply disabled.
+
 ```bash
 cargo run -p oddly-api
+```
+
+New migrations are applied with `powershell -File scripts/db-push.ps1`.
+
+### Smoke tests
+
+End-to-end tests that call the API handlers against the configured database as the workspace
+owner. They create records tagged `__oddly_smoke__` and delete them afterwards (including
+uploaded files):
+
+```bash
+ODDLY_SMOKE=1 cargo test -p oddly-api -- --test-threads=1
 ```
 
 Check it: <http://localhost:8080/api/v1/health> should return `{"status":"ok","database":"ok"}`.

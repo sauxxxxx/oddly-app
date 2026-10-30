@@ -8,6 +8,12 @@ Supabase Postgres. Migrations live in `supabase/migrations/` and are applied in 
 | `…0200_crm_sales` | `companies`, `contacts`, `lead_sources`, `pipeline_stages`, `leads`, `lead_lists`, `lead_list_members`, `lead_list_assignees`, `lead_research`, `lead_interactions`, `services`, `deals`, `proposals`, `proposal_items`, `proposal_versions` |
 | `…0300_clients_projects` | `clients`, `client_services`, `contracts`, `follow_ups`, `meetings`, `meeting_participants`, `projects`, `project_members`, `tasks`, `subtasks` |
 | `…0400_content_websites_ai` | `content_workflow_stages`, `content_posts`, `content_assets`, `content_approvals`, `websites`, `website_secrets`, `website_maintenance`, `ai_conversations`, `ai_messages`, storage buckets |
+| `…0500_lead_management` | Duplicate-detection functions (`normalize_domain/phone/name`) and indexes, `saved_filters`, `import_jobs`, `lead_overview` view (security_invoker) |
+| `…0600_crm_sales` | Reminder bookkeeping (`notified_at`), proposal templates (`is_template`), `clients.proposal_id` |
+| `…0700_clients` | Starter service catalog (names only, no prices), client/contract/task indexes |
+| `…0800_operations` | `projects.deliverables`, `website_checks` (uptime history), `sent_alerts` (reminder de-duplication) |
+
+Apply new migrations with `powershell -File scripts/db-push.ps1` (reads `DATABASE_URL` from `backend/.env`).
 
 ## Entity map
 
