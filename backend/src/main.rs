@@ -7,6 +7,8 @@ mod error;
 mod rate_limit;
 mod routes;
 mod state;
+#[cfg(test)]
+mod smoke_tests;
 mod supabase;
 mod validate;
 

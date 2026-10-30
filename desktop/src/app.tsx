@@ -12,6 +12,12 @@ import { LoginPage } from "@/features/auth/login-page";
 import { RequireAuth } from "@/features/auth/require-auth";
 import { SetupPage } from "@/features/auth/setup-page";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
+import { DuplicatesPage } from "@/features/leads/duplicates-page";
+import { ImportExportPage } from "@/features/leads/import-export-page";
+import { LeadDetailPage } from "@/features/leads/lead-detail-page";
+import { LeadListDetailPage, LeadListsPage } from "@/features/leads/lead-lists-page";
+import { LeadsPage } from "@/features/leads/leads-page";
+import { LeadResearchPage } from "@/features/leads/research-page";
 import { ModuleRoadmapPage } from "@/features/roadmap/module-roadmap-page";
 import { ProfilePage } from "@/features/settings/profile-page";
 import { RolesPage } from "@/features/settings/roles-page";
@@ -45,6 +51,15 @@ const router = createHashRouter([
             element: <AppShell />,
             children: [
               { index: true, element: <DashboardPage /> },
+              { path: "leads", element: <LeadsPage key="all" /> },
+              { path: "leads/local", element: <LeadsPage key="local" market="local" /> },
+              { path: "leads/international", element: <LeadsPage key="intl" market="international" /> },
+              { path: "leads/lists", element: <LeadListsPage /> },
+              { path: "leads/lists/:id", element: <LeadListDetailPage /> },
+              { path: "leads/research", element: <LeadResearchPage /> },
+              { path: "leads/import", element: <ImportExportPage /> },
+              { path: "leads/duplicates", element: <DuplicatesPage /> },
+              { path: "leads/record/:id", element: <LeadDetailPage /> },
               { path: "settings", element: <Navigate to="/settings/profile" replace /> },
               { path: "settings/profile", element: <ProfilePage /> },
               { path: "settings/team", element: <TeamPage /> },
