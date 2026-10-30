@@ -1,0 +1,9 @@
+target
+.git
+.claude
+**/node_modules
+desktop/dist
+desktop/src-tauri/gen
+**/.env
+**/.env.*
+!**/.env.example

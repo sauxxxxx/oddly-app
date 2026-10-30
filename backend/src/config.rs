@@ -16,6 +16,8 @@ pub struct Config {
     pub rate_limit_per_minute: u32,
     pub openai_api_key: Option<String>,
     pub secrets_key: Option<String>,
+    /// Behind a hosting proxy: take the client IP from X-Forwarded-For for rate limiting.
+    pub trust_proxy: bool,
 }
 
 impl Config {
@@ -28,7 +30,9 @@ impl Config {
         let config = Self {
             database_url: required("DATABASE_URL")?,
             database_max_connections: parse_or("DATABASE_MAX_CONNECTIONS", 10)?,
+            // Hosting platforms pass the port in PORT; API_BIND_ADDR wins if both are set.
             bind_addr: optional("API_BIND_ADDR")
+                .or_else(|| optional("PORT").map(|p| format!("0.0.0.0:{p}")))
                 .unwrap_or_else(|| "127.0.0.1:8080".into())
                 .parse()
                 .context("API_BIND_ADDR must look like 127.0.0.1:8080")?,
@@ -45,6 +49,7 @@ impl Config {
             rate_limit_per_minute: parse_or("RATE_LIMIT_PER_MINUTE", 600)?,
             openai_api_key: optional("OPENAI_API_KEY"),
             secrets_key: optional("SECRETS_KEY"),
+            trust_proxy: optional("TRUST_PROXY").is_some_and(|v| v == "true" || v == "1"),
         };
 
         if let Some(secret) = &config.supabase_jwt_secret {

@@ -46,7 +46,14 @@ pub async fn per_ip(
     request: Request,
     next: Next,
 ) -> Response {
-    let key = format!("ip:{}", addr.ip());
+    // Behind a proxy every request comes from the proxy, so use the forwarded client IP.
+    let forwarded = state
+        .config
+        .trust_proxy
+        .then(|| request.headers().get("x-forwarded-for")?.to_str().ok()?.split(',').next().map(|s| s.trim().to_owned()))
+        .flatten()
+        .filter(|ip| !ip.is_empty());
+    let key = format!("ip:{}", forwarded.unwrap_or_else(|| addr.ip().to_string()));
     if state.limiter.check(&key, state.config.rate_limit_per_minute, Duration::from_secs(60)) {
         next.run(request).await
     } else {
