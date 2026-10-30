@@ -1,0 +1,25 @@
+# Rust
+/target
+
+# Node
+node_modules/
+desktop/dist/
+
+# Tauri generated
+desktop/src-tauri/gen/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/

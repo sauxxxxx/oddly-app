@@ -1,0 +1,38 @@
+use std::{sync::Arc, time::Duration};
+
+use anyhow::Context;
+use sqlx::PgPool;
+use tokio::sync::Mutex;
+
+use crate::{auth::JwtVerifier, config::Config, rate_limit::RateLimiter, supabase::SupabaseAdmin};
+
+/// Shared, cheaply clonable application state.
+#[derive(Clone)]
+pub struct AppState {
+    pub db: PgPool,
+    pub config: Arc<Config>,
+    pub jwt: Arc<JwtVerifier>,
+    pub supabase: Arc<SupabaseAdmin>,
+    pub limiter: Arc<RateLimiter>,
+    /// Serializes first-run owner creation.
+    pub setup_lock: Arc<Mutex<()>>,
+}
+
+impl AppState {
+    pub fn new(config: Config, db: PgPool) -> anyhow::Result<Self> {
+        let http = reqwest::Client::builder()
+            .timeout(Duration::from_secs(15))
+            .user_agent(concat!("oddly-api/", env!("CARGO_PKG_VERSION")))
+            .build()
+            .context("building HTTP client")?;
+
+        Ok(Self {
+            jwt: Arc::new(JwtVerifier::new(&config, http.clone())),
+            supabase: Arc::new(SupabaseAdmin::new(&config, http)),
+            limiter: Arc::new(RateLimiter::default()),
+            setup_lock: Arc::new(Mutex::new(())),
+            config: Arc::new(config),
+            db,
+        })
+    }
+}
