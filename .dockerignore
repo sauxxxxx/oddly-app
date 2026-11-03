@@ -9,3 +9,4 @@ desktop/src-tauri/gen
 !**/.env.example
 backups
 release
+logs

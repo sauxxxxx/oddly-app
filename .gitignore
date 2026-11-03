@@ -28,3 +28,4 @@ Thumbs.db
 release/
 backups/
 *.tsbuildinfo
+logs/

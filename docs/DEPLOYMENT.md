@@ -11,6 +11,36 @@ desktop app: anyone with the installer could extract them and bypass every permi
 
 (The same React code can also be published as a website — see [Optional: web version](#optional-web-version).)
 
+Two ways to run the API:
+
+- **On this PC, through a Cloudflare Tunnel (free)** — see [Hosting on this PC](#hosting-on-this-pc).
+  ODDLY is only available while this PC is on, awake and online.
+- **On Render (about $7/month, always on)** — sections 1–3 below.
+
+---
+
+## Hosting on this PC
+
+The API runs here and Cloudflare publishes it at `https://api.workwithoddly.com`. No router
+ports are opened: `cloudflared` makes an outbound connection, and the API only listens on
+`127.0.0.1`.
+
+1. **Create the tunnel** in the Cloudflare account that manages workwithoddly.com's DNS:
+   Zero Trust → **Networks → Tunnels → Create a tunnel → Cloudflared**, name `oddly`. Copy the
+   token (the long string after `--token`; ignore the install command). Then add a **public
+   hostname**: subdomain `api`, domain `workwithoddly.com`, service **HTTP** `localhost:8080`.
+2. **Save the token on this PC** (typed in hidden, stored encrypted for this Windows user):
+   `powershell -ExecutionPolicy Bypass -File scripts/save-tunnel-token.ps1`
+3. **Start the server** and keep the window open:
+   `powershell -ExecutionPolicy Bypass -File scripts/start-server.ps1`
+   (add `-InstallStartup` to start it automatically when you sign in to Windows).
+4. Check `https://api.workwithoddly.com/api/v1/health`.
+
+Set Windows to never sleep while plugged in. If you own the Cloudflare account yourself,
+`cloudflared tunnel login` + `scripts/setup-tunnel.ps1` replaces steps 1–2.
+
+Then publish the installer (section 4).
+
 ---
 
 ## 1. Put the code on GitHub
