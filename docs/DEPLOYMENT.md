@@ -9,6 +9,11 @@ Two things go online:
 
 Supabase (database, auth, file storage) stays where it is.
 
+**Using Render:** `render.yaml` at the repo root creates both pieces. Push the repo to GitHub,
+then Render → **New → Blueprint** → choose the repo. Render asks once for the values marked
+secret (copy them from `backend/.env` and `desktop/.env.production`). Then add the custom
+domains (section 3). The sections below explain each setting.
+
 ---
 
 ## 1. API — `api.workwithoddly.com`
