@@ -8,6 +8,8 @@ use crate::state::AppState;
 pub(crate) mod clients;
 pub(crate) mod common;
 pub(crate) mod content;
+pub(crate) mod ai;
+pub(crate) mod analytics;
 pub(crate) mod dashboard;
 pub(crate) mod files;
 pub(crate) mod health;
@@ -30,6 +32,18 @@ pub fn router(state: AppState) -> Router {
         .route("/me", get(me::get_me).patch(me::update_me))
         .route("/me/password", post(me::change_password))
         .route("/dashboard", get(dashboard::summary))
+        .route("/ai/status", get(ai::status))
+        .route("/ai/conversations", get(ai::list_conversations).post(ai::create_conversation))
+        .route("/ai/conversations/{id}", get(ai::get_conversation).patch(ai::rename_conversation).delete(ai::delete_conversation))
+        .route("/ai/conversations/{id}/messages", post(ai::send_message))
+        .route("/ai/leads/{id}/analyze", post(ai::analyze_lead))
+        .route("/ai/drafts", post(ai::draft))
+        .route("/ai/insights", post(ai::insights))
+        .route("/analytics/leads", get(analytics::leads))
+        .route("/analytics/sales", get(analytics::sales))
+        .route("/analytics/clients", get(analytics::clients))
+        .route("/analytics/finance", get(analytics::finance))
+        .route("/analytics/team", get(analytics::team))
         .route("/lookups", get(lookups::lookups))
         .route("/notifications", get(notifications::list))
         .route("/notifications/read-all", post(notifications::mark_all_read))

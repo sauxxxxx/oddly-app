@@ -106,6 +106,8 @@ pub async fn cleanup(state: &AppState, actor: Uuid) {
         sqlx::query(sql).bind(&pattern).execute(&state.db).await.expect(sql);
     }
     let statements = [
+        "delete from public.ai_conversations where title like $1 or context_id in
+           (select l.id from public.leads l join public.companies c on c.id = l.company_id where c.name like $1)",
         "delete from public.activities where entity_type = 'lead' and entity_id in
            (select l.id from public.leads l join public.companies c on c.id = l.company_id where c.name like $1)",
         "delete from public.audit_logs where entity_id in
@@ -647,4 +649,163 @@ async fn smoke_operations() {
 
     cleanup(&state, user.id).await;
     eprintln!("smoke_operations: OK");
+}
+#[tokio::test]
+async fn smoke_analytics() {
+    let Some((state, owner)) = setup().await else { return };
+    use routes::analytics;
+    let q = |from: &str, to: &str| Query(de::<analytics::RangeQuery>(json!({ "from": from, "to": to })));
+
+    // Owner: every report, over a short (daily), medium (weekly) and long (monthly) range.
+    for (from, to, bucket) in [("2026-10-01", "2026-11-03", "day"), ("2026-06-01", "2026-11-03", "week"), ("2024-01-01", "2026-11-03", "month")] {
+        let leads = to_value(analytics::leads(State(state.clone()), owner.clone(), q(from, to)).await);
+        assert_eq!(leads["range"]["bucket"], bucket);
+        assert!(leads["totals"]["total"].as_i64().unwrap() >= 0);
+        let sales = to_value(analytics::sales(State(state.clone()), owner.clone(), q(from, to)).await);
+        assert!(sales["won_by_currency"].is_array(), "owner sees money");
+        to_value(analytics::clients(State(state.clone()), owner.clone(), q(from, to)).await);
+        let finance = to_value(analytics::finance(State(state.clone()), owner.clone(), q(from, to)).await);
+        assert!(finance["note"].as_str().unwrap().contains("per currency"));
+        to_value(analytics::team(State(state.clone()), owner.clone(), q(from, to)).await);
+    }
+
+    // Default range (last 90 days) and a reversed range.
+    to_value(analytics::leads(State(state.clone()), owner.clone(), Query(de(json!({})))).await);
+    assert!(analytics::leads(State(state.clone()), owner.clone(), q("2026-11-03", "2026-10-01")).await.is_err());
+
+    // A member with analytics but no finance or view-all: scoped queries, no money.
+    let mut member = owner.clone();
+    member.roles = vec!["sales_rep".into()];
+    member.permissions = ["analytics.view", "leads.view"].into_iter().map(String::from).collect();
+    to_value(analytics::leads(State(state.clone()), member.clone(), q("2026-06-01", "2026-11-03")).await);
+    let sales = to_value(analytics::sales(State(state.clone()), member.clone(), q("2026-06-01", "2026-11-03")).await);
+    assert!(sales["won_by_currency"].is_null() && sales["revenue_trend"].is_null());
+    assert!(analytics::finance(State(state.clone()), member.clone(), q("2026-06-01", "2026-11-03")).await.is_err());
+    assert!(analytics::team(State(state.clone()), member, q("2026-06-01", "2026-11-03")).await.is_err());
+}
+
+/// A stand-in for the OpenAI API: asks for one tool call, then answers; JSON mode gets canned JSON.
+async fn mock_openai() -> (String, std::sync::Arc<std::sync::Mutex<Vec<Value>>>) {
+    use std::sync::{Arc, Mutex};
+    let seen: Arc<Mutex<Vec<Value>>> = Arc::default();
+    let log = seen.clone();
+    let app = axum::Router::new().route(
+        "/v1/chat/completions",
+        axum::routing::post(move |Json(body): Json<Value>| {
+            let log = log.clone();
+            async move {
+                log.lock().unwrap().push(body.clone());
+                let messages = body["messages"].as_array().cloned().unwrap_or_default();
+                let system = messages[0]["content"].as_str().unwrap_or("").to_owned();
+                let has_tool_result = messages.iter().any(|m| m["role"] == "tool");
+                let message = if body.get("response_format").is_some() {
+                    let content = if system.contains("\"insights\"") {
+                        json!({ "insights": ["Follow up with the bakery today."] })
+                    } else {
+                        json!({ "summary": "Small bakery with a basic website.", "opportunities": [{ "service": "Social media", "why": "No social links recorded." }],
+                                "observations": [], "outreach_angle": "Offer a content calendar.", "to_verify": ["Instagram presence"], "data_gaps": ["Revenue"] })
+                    };
+                    json!({ "role": "assistant", "content": content.to_string() })
+                } else if body.get("tools").is_some() && !has_tool_result {
+                    json!({ "role": "assistant", "content": null, "tool_calls": [{ "id": "call_1", "type": "function",
+                        "function": { "name": "search_leads", "arguments": json!({ "search": TAG }).to_string() } }] })
+                } else if has_tool_result {
+                    let result = messages.iter().find(|m| m["role"] == "tool").unwrap()["content"].as_str().unwrap().to_owned();
+                    json!({ "role": "assistant", "content": format!("Found: {result}") })
+                } else {
+                    json!({ "role": "assistant", "content": "Subject: Hello\n\nDraft body." })
+                };
+                Json(json!({ "choices": [{ "message": message }], "usage": { "prompt_tokens": 10, "completion_tokens": 5 } }))
+            }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (format!("http://{addr}/v1"), seen)
+}
+
+#[tokio::test]
+async fn smoke_ai() {
+    let Some((plain, user)) = setup().await else { return };
+    cleanup(&plain, user.id).await;
+
+    // Not configured: honest status and a clear error, no fake answers.
+    let status = serde_json::to_value(routes::ai::status(State(plain.clone()), user.clone()).await.0).unwrap();
+    if plain.ai.is_none() {
+        assert_eq!(status["configured"], false);
+        let conv = to_value(routes::ai::create_conversation(State(plain.clone()), user.clone(), Json(de(json!({})))).await);
+        let id: Uuid = de(conv["id"].clone());
+        let err = routes::ai::send_message(State(plain.clone()), user.clone(), Path(id), Json(de(json!({ "content": "hi" })))).await;
+        assert!(matches!(err, Err(crate::error::AppError::Unavailable(_))));
+        sqlx::query("delete from public.ai_conversations where id = $1").bind(id).execute(&plain.db).await.unwrap();
+    }
+
+    let (url, seen) = mock_openai().await;
+    let mut config = (*plain.config).clone();
+    config.openai_api_key = Some("test-key".into());
+    config.openai_base_url = url;
+    let state = AppState::new(config, plain.db.clone()).expect("state");
+    let st = || State(state.clone());
+    let u = || user.clone();
+
+    let created = to_value(
+        routes::leads::create(st(), u(), Json(de(json!({
+            "business_name": format!("{TAG} AI Bakery"), "market": "local", "city": "Cebu City", "country": "Philippines",
+            "next_action": "Call the owner"
+        }))))
+        .await,
+    );
+    let lead_id: Uuid = de(created["lead"]["id"].clone());
+
+    // Chat: the model asks for a tool, gets this user's data back, then answers. Both messages are stored.
+    let conv = to_value(routes::ai::create_conversation(st(), u(), Json(de(json!({ "context_type": "lead", "context_id": lead_id })))).await);
+    assert_eq!(conv["context_label"], format!("{TAG} AI Bakery"));
+    let conv_id: Uuid = de(conv["id"].clone());
+    let ex = to_value(
+        routes::ai::send_message(st(), u(), Path(conv_id), Json(de(json!({ "content": format!("{TAG} which leads are new?") })))).await,
+    );
+    let answer = ex["assistant_message"]["content"].as_str().unwrap();
+    assert!(answer.contains("AI Bakery"), "tool result reached the model: {answer}");
+    assert_eq!(ex["assistant_message"]["tools"], json!(["search_leads"]));
+    let detail = to_value(routes::ai::get_conversation(st(), u(), Path(conv_id)).await);
+    assert_eq!(detail["messages"].as_array().unwrap().len(), 2);
+    assert!(detail["title"].as_str().unwrap().starts_with(TAG));
+    {
+        let requests = seen.lock().unwrap();
+        let first = &requests[requests.len() - 2];
+        assert!(first["messages"][0]["content"].as_str().unwrap().contains("Never invent"));
+        let names: Vec<&str> = first["tools"].as_array().unwrap().iter().map(|t| t["function"]["name"].as_str().unwrap()).collect();
+        assert!(names.contains(&"search_leads") && names.contains(&"finance_report"), "{names:?}");
+    }
+
+    // A member without leads.view gets no lead tools, the tool itself refuses, and conversations stay private.
+    let mut member = user.clone();
+    member.id = Uuid::new_v4();
+    member.roles = vec!["content".into()];
+    member.permissions = ["ai.use", "content.view"].into_iter().map(String::from).collect();
+    assert!(!crate::ai::tools::definitions(&member).to_string().contains("search_leads"));
+    let refused = crate::ai::tools::run(&state, &member, "search_leads", "{}").await;
+    assert!(refused.contains("Not permitted"), "{refused}");
+    assert!(routes::ai::get_conversation(st(), member.clone(), Path(conv_id)).await.is_err());
+
+    // Analyzer stores labeled suggestions on the lead's research.
+    let analysis = to_value(routes::ai::analyze_lead(st(), u(), Path(lead_id)).await);
+    assert_eq!(analysis["label"], "AI suggestions — not verified");
+    let research = to_value(routes::leads::research::get(st(), u(), Path(lead_id)).await);
+    assert_eq!(research["ai_suggestions"]["analysis"]["opportunities"][0]["service"], "Social media");
+
+    // Drafts and insights.
+    let d = to_value(routes::ai::draft(st(), u(), Json(de(json!({ "kind": "outreach", "lead_id": lead_id, "channel": "email" })))).await);
+    assert!(d["text"].as_str().unwrap().starts_with("Subject:"));
+    assert!(routes::ai::draft(st(), u(), Json(de(json!({ "kind": "outreach" })))).await.is_err(), "needs a lead");
+    assert!(routes::ai::draft(st(), u(), Json(de(json!({ "kind": "meeting_summary" })))).await.is_err(), "needs notes");
+    to_value(routes::ai::draft(st(), u(), Json(de(json!({ "kind": "weekly_summary" })))).await);
+    let ins = to_value(routes::ai::insights(st(), u(), Json(de(json!({ "refresh": true })))).await);
+    assert_eq!(ins["cached"], false);
+    let again = to_value(routes::ai::insights(st(), u(), Json(de(json!({})))).await);
+    assert_eq!(again["cached"], true);
+
+    routes::ai::delete_conversation(st(), u(), Path(conv_id)).await.unwrap();
+    cleanup(&state, user.id).await;
 }

@@ -7,3 +7,5 @@ desktop/src-tauri/gen
 **/.env
 **/.env.*
 !**/.env.example
+backups
+release

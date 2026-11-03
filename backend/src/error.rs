@@ -27,6 +27,9 @@ pub enum AppError {
     Conflict(String),
     #[error("Too many requests. Please slow down and try again shortly.")]
     TooManyRequests,
+    /// A dependency (e.g. the AI service) isn't configured or didn't respond.
+    #[error("{0}")]
+    Unavailable(String),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -45,6 +48,7 @@ impl AppError {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found"),
             Self::Conflict(_) => (StatusCode::CONFLICT, "conflict"),
             Self::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, "rate_limited"),
+            Self::Unavailable(_) => (StatusCode::SERVICE_UNAVAILABLE, "unavailable"),
             Self::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error"),
         }
     }

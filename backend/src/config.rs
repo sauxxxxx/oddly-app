@@ -15,6 +15,9 @@ pub struct Config {
     pub setup_token: Option<String>,
     pub rate_limit_per_minute: u32,
     pub openai_api_key: Option<String>,
+    pub openai_model: String,
+    /// OpenAI-compatible endpoint; defaults to OpenAI itself.
+    pub openai_base_url: String,
     pub secrets_key: Option<String>,
     /// Behind a hosting proxy: take the client IP from X-Forwarded-For for rate limiting.
     pub trust_proxy: bool,
@@ -48,9 +51,19 @@ impl Config {
             setup_token: optional("SETUP_TOKEN"),
             rate_limit_per_minute: parse_or("RATE_LIMIT_PER_MINUTE", 600)?,
             openai_api_key: optional("OPENAI_API_KEY"),
+            openai_model: optional("OPENAI_MODEL").unwrap_or_else(|| "gpt-4.1-mini".into()),
+            openai_base_url: optional("OPENAI_BASE_URL")
+                .unwrap_or_else(|| "https://api.openai.com/v1".into())
+                .trim_end_matches('/')
+                .to_owned(),
             secrets_key: optional("SECRETS_KEY"),
             trust_proxy: optional("TRUST_PROXY").is_some_and(|v| v == "true" || v == "1"),
         };
+
+        let local = ["http://localhost", "http://127.0.0.1"].iter().any(|p| config.openai_base_url.starts_with(p));
+        if !config.openai_base_url.starts_with("https://") && !local {
+            bail!("OPENAI_BASE_URL must be an https:// URL");
+        }
 
         if let Some(secret) = &config.supabase_jwt_secret {
             if secret.len() < 32 {

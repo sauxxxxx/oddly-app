@@ -1,4 +1,5 @@
 import {
+  RefreshCw,
   Activity,
   CalendarClock,
   CalendarDays,
@@ -17,9 +18,11 @@ import { EmptyState } from "@/components/states";
 import { Badge, PriorityBadge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Avatar, Progress } from "@/components/ui/misc";
+import { Avatar, Progress, Skeleton } from "@/components/ui/misc";
+import { useInsights, useRefreshInsights } from "@/features/ai/api";
 import { useMe } from "@/features/auth/auth-context";
 import { formatDate, formatMoney, formatPlainDate, formatRelative, formatTime, humanize } from "@/lib/format";
+import { errorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { DashboardSummary } from "@/types/api";
 
@@ -320,7 +323,11 @@ export function RecentActivity({ data }: Props) {
 }
 
 export function AiInsights({ data }: Props) {
-  const { configured, items } = data.insights;
+  const { configured } = data.insights;
+  const insights = useInsights(configured);
+  const refresh = useRefreshInsights();
+  const busy = insights.isFetching || refresh.isPending;
+  const error = refresh.error ?? insights.error;
   return (
     <Card className="overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-accent/15 blur-3xl" />
@@ -331,20 +338,33 @@ export function AiInsights({ data }: Props) {
           </span>
         }
         description="Suggestions only — always check before acting"
+        action={
+          configured && (
+            <Button variant="ghost" size="sm" aria-label="Refresh insights" disabled={busy} onClick={() => refresh.mutate()}>
+              <RefreshCw className={busy ? "animate-spin" : undefined} />
+            </Button>
+          )
+        }
       />
       <CardBody>
         {!configured ? (
           <EmptyState
             icon={Sparkles}
-            title="AI insights aren't switched on yet"
-            description="They arrive with the AI Assistant (Phase 6), once an administrator adds an OpenAI key on the server. Keys are never stored in the app."
+            title="AI insights aren't switched on"
+            description="An administrator needs to add an OpenAI key on the server, and your role needs the AI assistant permission. Keys are never stored in the app."
             compact
           />
-        ) : items.length === 0 ? (
+        ) : error && !insights.data ? (
+          <p className="text-sm text-danger-fg">{errorMessage(error)}</p>
+        ) : !insights.data ? (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
+          </div>
+        ) : insights.data.items.length === 0 ? (
           <EmptyState icon={Sparkles} title="No insights yet" description="Insights are generated from your pipeline and client activity." compact />
         ) : (
           <ul className="flex flex-col gap-2">
-            {items.map((text) => (
+            {insights.data.items.map((text) => (
               <li key={text} className="rounded-xl border border-line bg-raised/50 p-3 text-sm text-muted">
                 {text}
               </li>

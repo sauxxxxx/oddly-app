@@ -1,6 +1,3 @@
-import Papa from "papaparse";
-import { readSheet } from "read-excel-file/browser";
-import writeXlsxFile from "write-excel-file/browser";
 
 import { datedName, saveFile } from "./download";
 
@@ -22,10 +19,12 @@ export async function parseSpreadsheet(file: File): Promise<ParsedSheet> {
 
   if (name.endsWith(".csv") || file.type === "text/csv") {
     const text = await file.text();
+    const { default: Papa } = await import("papaparse");
     const result = Papa.parse<string[]>(text.replace(/^﻿/, ""), { skipEmptyLines: "greedy" });
     if (result.errors.length && !result.data.length) throw new Error(result.errors[0]?.message ?? "Couldn't read the CSV file.");
     grid = result.data.map((r) => r.map(cellText));
   } else if (name.endsWith(".xlsx")) {
+    const { readSheet } = await import("read-excel-file/browser");
     const data = await readSheet(file);
     grid = data.map((r) => r.map(cellText));
   } else {
@@ -52,6 +51,7 @@ export interface ExportColumn<T> {
 export async function exportRows<T>(format: "xlsx" | "csv", baseName: string, columns: ExportColumn<T>[], rows: T[]) {
   const fileName = datedName(baseName, format);
   if (format === "csv") {
+    const { default: Papa } = await import("papaparse");
     const csv = Papa.unparse({
       fields: columns.map((c) => c.header),
       data: rows.map((r) => columns.map((c) => c.value(r) ?? "")),
@@ -69,6 +69,7 @@ export async function exportRows<T>(format: "xlsx" | "csv", baseName: string, co
       return v === null || v === undefined || v === "" ? null : { value: v };
     }),
   );
+  const { default: writeXlsxFile } = await import("write-excel-file/browser");
   const blob = await writeXlsxFile([header, ...body], { columns: columns.map(() => ({ width: 22 })) }).toBlob();
   return saveFile(fileName, blob, { name: "Excel workbook", extensions: ["xlsx"] });
 }

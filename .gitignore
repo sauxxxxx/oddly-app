@@ -23,3 +23,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Built installers and update manifests
+release/
+backups/
+*.tsbuildinfo

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "ODDLY",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.oddly.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -36,6 +36,24 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true,
+    "publisher": "ODDLY",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI4NUU0QTMxMzhCNEEzNUUKUldSZW83UTRNVXBlS0plY1E3QVhKc0tnVU5uLytNVnJEU2Z2T24xanpUdGJXRUdMSWtDSGRHZG0K",
+      "endpoints": [
+        "https://app.workwithoddly.com/updates/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

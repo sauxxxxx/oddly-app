@@ -13,7 +13,8 @@ desktop app backed by one shared database.
 | Database, auth, files | Supabase (Postgres, Auth, Storage) | `supabase/` |
 
 Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) first. Also: [`docs/DATABASE.md`](docs/DATABASE.md),
-[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
+[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md), [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md),
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md) (backups, releases, monitoring), [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Status
 
@@ -24,8 +25,8 @@ Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) first. Also: [`docs/DATABASE
 | 3 CRM & Sales — pipeline board, custom stages, outreach log, follow-ups & reminders, meetings, deals, proposals (versions, templates, PDF), lead → client conversion | Done |
 | 4 Clients — client workspace, contacts, onboarding checklist, services, contracts & documents, service catalog, history | Done |
 | 5 Agency Operations — projects & tasks (templates, Kanban, calendar), content studio (workflow, approvals, captions, media library), websites (maintenance, encrypted credentials, uptime monitoring, renewal reminders), team workload, activity log | Done |
-| 6 Analytics & AI | Not started (roadmap pages) |
-| 7 Production readiness | Not started |
+| 6 Analytics & AI — lead, sales, client, financial (per currency) and team reports with CSV/PDF export; AI assistant with permission-scoped tools, draft writer, lead opportunity analyzer, dashboard insights | Done |
+| 7 Production readiness — HTTP hardening, route code-splitting, signed installer with auto-update, backup script, operations & security docs | Done |
 
 Background jobs in the API: follow-up and meeting reminders (every 5 min), uptime checks and
 renewal reminders for domains, hosting, SSL and contracts (every 10 min).
@@ -58,6 +59,8 @@ Fill in `backend/.env` (each value is explained in the file):
 - `SUPABASE_URL` and `SUPABASE_SECRET_KEY` — Project Settings → API Keys (secret / service_role)
 - `SUPABASE_JWT_SECRET` — only if your project still uses the legacy JWT secret
 
+- `OPENAI_API_KEY` — turns on the AI assistant (optional; `OPENAI_MODEL` defaults to `gpt-4.1-mini`).
+  Without it every AI screen says it isn't set up — nothing is faked.
 - `SECRETS_KEY` — encrypts stored website credentials (32 random bytes, base64:
   `openssl rand -base64 32`). **Back it up somewhere safe**: without it, stored credentials
   can't be read. Without it set, the credential vault is simply disabled.
@@ -104,13 +107,12 @@ in localStorage there instead of the OS keychain).
 ## Building an installer
 
 ```bash
-cd desktop
-npm run tauri build
+powershell -ExecutionPolicy Bypass -File scripts/build-desktop-release.ps1
 ```
 
-The API is deployed separately (it is one binary: `cargo build -p oddly-api --release`).
-Point `VITE_API_URL` at its HTTPS address before building the desktop app, and add that
-address to `connect-src` in `desktop/src-tauri/tauri.conf.json`.
+Builds the signed Windows installer against the production API (`desktop/.env.production`)
+plus the `latest.json` update manifest in `release/updates/`. See [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
+for publishing updates. The API is deployed separately ([`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)).
 
 ## Security checklist
 

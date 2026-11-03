@@ -42,7 +42,8 @@ web app.
 | `RUST_LOG` | `oddly_api=info,tower_http=info` |
 | `API_BIND_ADDR` | leave unset (the platform's `PORT` is used) |
 | `SETUP_TOKEN` | leave unset (the owner account already exists) |
-| `OPENAI_API_KEY` | leave unset until Phase 6 |
+| `OPENAI_API_KEY` | your OpenAI key, to turn on the AI assistant (optional — set a spending limit first) |
+| `OPENAI_MODEL` | optional, default `gpt-4.1-mini` |
 
 The two `tauri` origins let the installed desktop app use the same API.
 
@@ -101,11 +102,17 @@ Authentication → URL Configuration:
 
 ---
 
-## 5. Desktop installer (optional)
+## 5. Desktop installer and updates
 
-`npm run tauri build` (in `desktop/`) uses `desktop/.env.production`, so the installer it
-produces talks to `https://api.workwithoddly.com`. Share the `.msi` / `.exe` from
-`target/release/bundle/` with the team.
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/build-desktop-release.ps1
+```
+
+Produces `release/updates/ODDLY_<version>_x64-setup.exe` and `latest.json`, built against
+`https://api.workwithoddly.com`. Share the installer with the team, and upload **both** files to
+`https://app.workwithoddly.com/updates/` so installed apps find later versions
+(with a Git-based static host: copy them into `desktop/public/updates/` before deploying, or
+upload them alongside `dist/`). Details: [OPERATIONS.md](OPERATIONS.md).
 
 ---
 

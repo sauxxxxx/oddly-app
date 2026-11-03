@@ -3,7 +3,7 @@ import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router";
 
 import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/misc";
+import { Kbd, Skeleton } from "@/components/ui/misc";
 import { ALL_MODULES } from "@/config/navigation";
 import { useTheme } from "@/lib/theme";
 import { safeStorage } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { safeStorage } from "@/lib/utils";
 import { CommandPalette, shortcutLabel } from "./command-palette";
 import { NotificationBell } from "./notification-bell";
 import { Sidebar } from "./sidebar";
+import { UpdateButton } from "./update-button";
 
 const COLLAPSE_KEY = "oddly.sidebar.collapsed";
 
@@ -64,6 +65,7 @@ export function AppShell() {
               <span className="flex-1 text-left">Jump to…</span>
               <Kbd>{shortcutLabel}</Kbd>
             </button>
+            <UpdateButton />
             <ThemeToggle />
             <NotificationBell />
           </div>
@@ -71,12 +73,23 @@ export function AppShell() {
 
         <main ref={mainRef} className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1600px] px-7 py-7">
-            <Outlet />
+            <React.Suspense fallback={<PageLoading />}>
+              <Outlet />
+            </React.Suspense>
           </div>
         </main>
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+    </div>
+  );
+}
+
+function PageLoading() {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading page">
+      <Skeleton className="h-10 w-72 rounded-xl" />
+      <Skeleton className="h-64 rounded-card" />
     </div>
   );
 }

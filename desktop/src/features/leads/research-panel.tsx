@@ -1,4 +1,4 @@
-import { Save, Sparkles } from "lucide-react";
+import { Save } from "lucide-react";
 import * as React from "react";
 
 import { ErrorState, ListSkeleton } from "@/components/states";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { TagInput, Textarea } from "@/components/ui/form-controls";
 import { Field } from "@/components/ui/input";
+import { AnalyzerCard } from "@/features/ai/analyzer-card";
 import { useAuth } from "@/features/auth/auth-context";
 import { errorMessage } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
@@ -45,7 +46,7 @@ function emptyForm(r: Research | null | undefined) {
 export function ResearchPanel({ leadId }: { leadId: string }) {
   const research = useResearch(leadId);
   const save = useSaveResearch(leadId);
-  const { can, me } = useAuth();
+  const { can } = useAuth();
   const [form, setForm] = React.useState(() => emptyForm(null));
   const editable = can("leads.edit");
 
@@ -127,27 +128,7 @@ export function ResearchPanel({ leadId }: { leadId: string }) {
         </CardBody>
       </Card>
 
-      <Card className="self-start overflow-hidden">
-        <div aria-hidden className="pointer-events-none absolute -right-14 -top-14 size-40 rounded-full bg-accent/15 blur-3xl" />
-        <CardHeader
-          title={<span className="flex items-center gap-2"><Sparkles className="size-4 text-accent" /> Opportunity analyzer</span>}
-          description="AI suggestions · always labeled, never added automatically"
-        />
-        <CardBody>
-          <p className="text-sm leading-relaxed text-muted">
-            The analyzer will read this lead's details and your research, then suggest services and an outreach angle. It
-            won't invent facts about the business — anything it can't verify is marked as a guess.
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-subtle">
-            {me?.ai_configured
-              ? "Arrives with the AI Assistant in Phase 6."
-              : "Arrives with the AI Assistant in Phase 6, once an administrator adds an OpenAI key on the server."}
-          </p>
-          <Button variant="secondary" size="sm" className="mt-4" disabled>
-            <Sparkles /> Analyze opportunity
-          </Button>
-        </CardBody>
-      </Card>
+      <AnalyzerCard leadId={leadId} suggestions={research.data?.ai_suggestions} generatedAt={research.data?.ai_generated_at ?? null} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 //! ODDLY API — the single backend every ODDLY client (desktop now, web later) talks to.
 
+mod ai;
 mod audit;
 mod auth;
 mod config;
@@ -20,11 +21,14 @@ use std::{net::SocketAddr, time::Duration};
 
 use anyhow::Context;
 use axum::{
-    http::{header, HeaderValue, Method},
+    http::{header, HeaderValue, Method, StatusCode},
     middleware,
 };
 use sqlx::postgres::PgPoolOptions;
-use tower_http::{cors::CorsLayer, limit::RequestBodyLimitLayer, trace::TraceLayer};
+use tower_http::{
+    catch_panic::CatchPanicLayer, cors::CorsLayer, limit::RequestBodyLimitLayer, set_header::SetResponseHeaderLayer,
+    timeout::TimeoutLayer, trace::TraceLayer,
+};
 use tracing_subscriber::EnvFilter;
 
 use crate::{config::Config, state::AppState};
@@ -60,8 +64,17 @@ async fn main() -> anyhow::Result<()> {
     let app = routes::router(state.clone())
         .layer(middleware::from_fn_with_state(state, rate_limit::per_ip))
         .layer(RequestBodyLimitLayer::new(2 * 1024 * 1024))
+        // AI answers can take a while; anything slower than this is cut off.
+        .layer(TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(150)))
+        // API responses carry private data: never cache them, never render them as pages.
+        .layer(SetResponseHeaderLayer::overriding(header::CACHE_CONTROL, HeaderValue::from_static("no-store")))
+        .layer(SetResponseHeaderLayer::overriding(header::X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff")))
+        .layer(SetResponseHeaderLayer::overriding(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY")))
+        .layer(SetResponseHeaderLayer::overriding(header::REFERRER_POLICY, HeaderValue::from_static("no-referrer")))
         .layer(cors)
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        // A bug in one request returns a 500 instead of dropping the connection.
+        .layer(CatchPanicLayer::new());
 
     let listener = tokio::net::TcpListener::bind(bind_addr)
         .await
@@ -87,7 +100,25 @@ fn cors_layer(origins: &[String]) -> anyhow::Result<CorsLayer> {
         .max_age(Duration::from_secs(3600)))
 }
 
+/// Ctrl+C locally; SIGTERM when a hosting platform stops or redeploys the container.
 async fn shutdown_signal() {
-    let _ = tokio::signal::ctrl_c().await;
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut s) => {
+                s.recv().await;
+            }
+            Err(_) => std::future::pending::<()>().await,
+        }
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
     tracing::info!("shutting down");
 }

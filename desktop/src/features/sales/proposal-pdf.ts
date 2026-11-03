@@ -1,6 +1,3 @@
-import { jsPDF } from "jspdf";
-import { autoTable } from "jspdf-autotable";
-
 import { datedName, saveFile } from "@/lib/download";
 import type { ProposalDetail } from "@/types/sales";
 import { BILLING_LABELS } from "@/types/sales";
@@ -22,6 +19,8 @@ const MUTED: [number, number, number] = [113, 113, 122];
 
 /** Builds the client-facing proposal PDF and saves it. */
 export async function downloadProposalPdf(p: ProposalDetail, preparedBy: { name: string; email: string }) {
+  // Loaded on demand: the PDF library is large.
+  const [{ jsPDF }, { autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const M = 48;

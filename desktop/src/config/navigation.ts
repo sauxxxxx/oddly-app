@@ -231,9 +231,9 @@ export const NAV_SECTIONS: NavSection[] = [
         children: [
           { label: "Lead Analytics", path: "/analytics/leads" },
           { label: "Sales Analytics", path: "/analytics/sales" },
-          { label: "Client Analytics", path: "/analytics/clients" },
+          { label: "Client Analytics", path: "/analytics/clients", permission: "clients.view" },
           { label: "Financial Reports", path: "/analytics/finance", permission: "finance.view" },
-          { label: "Team Performance", path: "/analytics/team" },
+          { label: "Team Performance", path: "/analytics/team", permission: "team.view" },
         ],
       },
       {
@@ -250,6 +250,10 @@ export const NAV_SECTIONS: NavSection[] = [
           "Meeting, client-history and pipeline summaries",
           "Content ideas and caption suggestions",
           "Weekly agency summary — nothing is sent or changed without your confirmation",
+        ],
+        children: [
+          { label: "Assistant", path: "/ai" },
+          { label: "Draft Writer", path: "/ai/drafts" },
         ],
       },
     ],
