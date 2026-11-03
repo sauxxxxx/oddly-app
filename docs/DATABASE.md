@@ -12,6 +12,7 @@ Supabase Postgres. Migrations live in `supabase/migrations/` and are applied in 
 | `…0600_crm_sales` | Reminder bookkeeping (`notified_at`), proposal templates (`is_template`), `clients.proposal_id` |
 | `…0700_clients` | Starter service catalog (names only, no prices), client/contract/task indexes |
 | `…0800_operations` | `projects.deliverables`, `website_checks` (uptime history), `sent_alerts` (reminder de-duplication) |
+| `…0900_releases` | private `releases` storage bucket for desktop installers and the update manifest |
 
 Apply new migrations with `powershell -File scripts/db-push.ps1` (reads `DATABASE_URL` from `backend/.env`).
 

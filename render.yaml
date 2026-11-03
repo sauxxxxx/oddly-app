@@ -1,6 +1,7 @@
-# Render Blueprint: creates the ODDLY API and web app from this repository.
+# Render Blueprint: creates the ODDLY API from this repository.
 # Render → New → Blueprint → pick this repo. Values marked `sync: false` are asked for
 # once in Render's dashboard (copy them from backend/.env on the owner's PC — never commit them).
+# ODDLY is used through the desktop app; the API also serves its installer and updates.
 # Step-by-step guide: docs/DEPLOYMENT.md.
 
 services:
@@ -16,7 +17,7 @@ services:
     dockerContext: .
     healthCheckPath: /api/v1/health
     autoDeploy: true
-    # Only redeploy the API when its code changes.
+    # Only redeploy when the API's code changes.
     buildFilter:
       paths:
         - backend/**
@@ -34,41 +35,12 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      # The desktop app's origins (Windows/Linux and macOS).
       - key: CORS_ALLOWED_ORIGINS
-        value: https://app.workwithoddly.com,http://tauri.localhost,tauri://localhost
+        value: http://tauri.localhost,tauri://localhost
       - key: TRUST_PROXY
         value: "true"
       - key: RATE_LIMIT_PER_MINUTE
         value: "600"
       - key: RUST_LOG
         value: oddly_api=info,tower_http=info
-
-  # Web app — https://app.workwithoddly.com (static files; holds no secrets)
-  - type: web
-    name: oddly-app
-    runtime: static
-    buildCommand: cd desktop && npm ci && npm run build
-    staticPublishPath: ./desktop/dist
-    buildFilter:
-      paths:
-        - desktop/**
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-    envVars:
-      - key: NODE_VERSION
-        value: "22"
-      - key: VITE_API_URL
-        value: https://api.workwithoddly.com/api/v1
-      - key: VITE_SUPABASE_URL
-        value: https://uevhngxijollpkrkbcwq.supabase.co
-      # The publishable (sb_publishable_…) key from desktop/.env.production — public by design.
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false

@@ -1,14 +1,17 @@
-# Builds the signed Windows installer and the auto-update manifest.
+# Builds the signed Windows installer and the auto-update manifest, then publishes them.
 #
-#   powershell -ExecutionPolicy Bypass -File scripts\build-desktop-release.ps1 [-Notes "What's new"]
+#   powershell -ExecutionPolicy Bypass -File scripts\build-desktop-release.ps1 [-Notes "What's new"] [-SkipUpload]
 #
-# Output: release\updates\  ->  upload its contents to https://app.workwithoddly.com/updates/
-# (see docs/DEPLOYMENT.md). The installer talks to the API in desktop\.env.production.
+# Output: release\updates\ (installer + latest.json). Unless -SkipUpload is given, both are
+# uploaded to the private Supabase Storage bucket `releases` (using backend\.env), where the
+# API serves them: installed apps update themselves and new teammates download from
+#   https://api.workwithoddly.com/api/v1/updates/download
+# The installer talks to the API in desktop\.env.production.
 #
 # Needs the updater signing key at %USERPROFILE%\.tauri\oddly-updater.key (never commit it).
 # Losing that key means installed apps can no longer receive updates — keep a backup.
 
-param([string]$Notes = "")
+param([string]$Notes = "", [switch]$SkipUpload)
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -54,7 +57,7 @@ $manifest = [ordered]@{
     platforms = [ordered]@{
         "windows-x86_64" = [ordered]@{
             signature = $sig.Trim()
-            url       = "https://app.workwithoddly.com/updates/$fileName"
+            url       = "https://api.workwithoddly.com/api/v1/updates/$fileName"
         }
     }
 }
@@ -65,4 +68,34 @@ Write-Host ""
 Write-Host "Built ODDLY $version"
 Write-Host "  $out\$fileName"
 Write-Host "  $out\latest.json"
-Write-Host "Upload both files to https://app.workwithoddly.com/updates/"
+
+if ($SkipUpload) { return }
+
+# Upload with the service key from backend\.env (never printed). Installer first, manifest
+# last, so latest.json never points at a file that isn't there yet.
+$envFile = Get-Content (Join-Path $root "backend\.env")
+function EnvValue($name) {
+    $line = $envFile | Where-Object { $_ -match "^$name=" } | Select-Object -First 1
+    if (-not $line) { throw "$name is missing from backend\.env" }
+    ($line -split '=', 2)[1].Trim()
+}
+$supabaseUrl = (EnvValue "SUPABASE_URL").TrimEnd('/')
+$secret = EnvValue "SUPABASE_SECRET_KEY"
+$headers = @{ apikey = $secret; "x-upsert" = "true"; "cache-control" = "no-cache" }
+if ($secret.StartsWith("eyJ")) { $headers.Authorization = "Bearer $secret" }
+
+$files = @(
+    @{ Name = $fileName; Type = "application/octet-stream" },
+    @{ Name = "latest.json"; Type = "application/json" }
+)
+foreach ($item in $files) {
+    try {
+        Invoke-RestMethod -Method Post -Uri "$supabaseUrl/storage/v1/object/releases/$($item.Name)" -Headers $headers `
+            -ContentType $item.Type -InFile (Join-Path $out $item.Name) | Out-Null
+        Write-Host "Uploaded $($item.Name)"
+    } catch {
+        throw "Uploading $($item.Name) failed: $($_.Exception.Message). Has the 'releases' bucket been created (scripts\db-push.ps1)?"
+    }
+}
+Write-Host ""
+Write-Host "Published. New teammates download from https://api.workwithoddly.com/api/v1/updates/download"

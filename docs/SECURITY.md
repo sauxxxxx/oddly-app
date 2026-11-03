@@ -37,7 +37,9 @@ Website logins are encrypted with AES-256-GCM (`SECRETS_KEY`), revealed only to 
 
 ## HTTP hardening
 
-- CORS limited to `app.workwithoddly.com` and the desktop app's origins.
+- CORS limited to the desktop app's origins (plus a web version's address, if one is published).
+- Installers and `latest.json` are served from a private bucket; only file names of the form
+  `ODDLY_<version>_x64-setup.exe` can be requested, through 10-minute signed links.
 - Per-IP rate limit (client IP from `X-Forwarded-For` only when `TRUST_PROXY=true`).
 - 2 MB request body limit; uploads go straight to Supabase Storage through short-lived signed URLs.
 - 150 s request timeout; panics return a 500 instead of dropping the connection.

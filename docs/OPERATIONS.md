@@ -41,9 +41,10 @@ project, keep the **same** `SECRETS_KEY`, and update the apps' `VITE_SUPABASE_*`
 
 1. Bump `version` in `desktop/src-tauri/tauri.conf.json`, `desktop/package.json` and the root
    `Cargo.toml` (all three must match).
-2. Build: `powershell -ExecutionPolicy Bypass -File scripts/build-desktop-release.ps1 -Notes "What's new"`
-3. Upload both files from `release/updates/` (`ODDLY_<version>_x64-setup.exe` and `latest.json`)
-   to `https://app.workwithoddly.com/updates/`.
+2. Build and publish: `powershell -ExecutionPolicy Bypass -File scripts/build-desktop-release.ps1 -Notes "What's new"`
+   — builds the signed installer and uploads it with `latest.json` to the private `releases`
+   storage bucket. The API serves them at `/api/v1/updates/latest.json` and
+   `/api/v1/updates/download` (link for new teammates). `-SkipUpload` builds without publishing.
 
 Installed apps check `latest.json` on start and every 6 hours. When there's a newer version an
 **Update** button appears; nothing installs until the user clicks *Install and restart*. Every

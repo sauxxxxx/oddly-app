@@ -116,6 +116,21 @@ impl Storage {
         Ok(items.into_iter().find(|o| o.name == name))
     }
 
+    /// The object's bytes, or None if it doesn't exist.
+    pub async fn download(&self, bucket: &str, path: &str) -> Result<Option<Vec<u8>>, AppError> {
+        let res = self
+            .req(reqwest::Method::GET, &format!("/object/{bucket}/{path}"))
+            .send()
+            .await
+            .context("calling Supabase Storage")?;
+        // Storage answers 400 or 404 for a missing object.
+        if matches!(res.status().as_u16(), 400 | 404) {
+            return Ok(None);
+        }
+        let res = check(res).await?;
+        Ok(Some(res.bytes().await.context("reading object")?.to_vec()))
+    }
+
     pub async fn remove(&self, bucket: &str, paths: &[String]) -> Result<(), AppError> {
         let res = self
             .req(reqwest::Method::DELETE, &format!("/object/{bucket}"))

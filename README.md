@@ -111,7 +111,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-desktop-release.ps1
 ```
 
 Builds the signed Windows installer against the production API (`desktop/.env.production`)
-plus the `latest.json` update manifest in `release/updates/`. See [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
+plus the `latest.json` update manifest, and publishes both through the API. See [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
 for publishing updates. The API is deployed separately ([`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)).
 
 ## Security checklist

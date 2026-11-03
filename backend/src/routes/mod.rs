@@ -22,11 +22,15 @@ pub(crate) mod sales;
 pub(crate) mod saved_filters;
 pub(crate) mod setup;
 pub(crate) mod team;
+pub(crate) mod updates;
 pub(crate) mod websites;
 
 pub fn router(state: AppState) -> Router {
     let api = Router::new()
         .route("/health", get(health::health))
+        .route("/updates/latest.json", get(updates::latest))
+        .route("/updates/download", get(updates::download))
+        .route("/updates/{name}", get(updates::installer))
         .route("/setup/status", get(setup::status))
         .route("/setup", post(setup::create_owner))
         .route("/me", get(me::get_me).patch(me::update_me))
