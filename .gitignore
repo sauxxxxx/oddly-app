@@ -29,3 +29,6 @@ release/
 backups/
 *.tsbuildinfo
 logs/
+
+# Local editor/agent settings
+.claude/

@@ -5,6 +5,8 @@
 FROM rust:1-bookworm AS build
 WORKDIR /app
 COPY . .
+# Lower this when building on a server that runs other apps.
+ARG CARGO_BUILD_JOBS=4
 RUN cargo build --release --locked -p oddly-api
 
 FROM debian:bookworm-slim

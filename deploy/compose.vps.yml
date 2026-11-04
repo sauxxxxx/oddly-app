@@ -1,0 +1,26 @@
+# ODDLY API on the shared VPS. nginx terminates HTTPS and forwards to 127.0.0.1:3201.
+# Secrets live only in /opt/oddly/.env on the server (chmod 600), never in this repo.
+# Deployed by scripts/deploy-vps.ps1.
+
+name: oddly
+
+services:
+  api:
+    image: oddly-api:local
+    restart: unless-stopped
+    env_file:
+      - path: /opt/oddly/.env
+        format: raw
+    environment:
+      # These override anything in .env (which is a copy of the development file).
+      API_BIND_ADDR: 0.0.0.0:8080
+      TRUST_PROXY: "true"
+      CORS_ALLOWED_ORIGINS: http://tauri.localhost,tauri://localhost
+      RUST_LOG: oddly_api=info,tower_http=info
+    ports:
+      - 127.0.0.1:3201:8080
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "3"
