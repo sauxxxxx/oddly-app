@@ -42,7 +42,7 @@ if ($UpdateEnv) {
     & scp @ssh (Join-Path $root "backend\.env") "${Server}:/opt/scout/.env"
     if ($LASTEXITCODE -ne 0) { throw "Uploading .env failed" }
     # Windows line endings would end up inside the values.
-    Remote 'chmod 600 /opt/scout/.env && tr -d "\r" < /opt/scout/.env > /opt/scout/.env.tmp && mv /opt/scout/.env.tmp /opt/scout/.env && chmod 600 /opt/scout/.env'
+    Remote "chmod 600 /opt/scout/.env && sed -i 's/\r`$//' /opt/scout/.env"
 }
 
 Remote "cd /opt/scout && rm -rf src && mkdir src && tar -xzf src.tar.gz -C src && rm src.tar.gz && cp src/deploy/compose.vps.yml compose.yml"

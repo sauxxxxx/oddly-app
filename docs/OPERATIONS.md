@@ -66,9 +66,9 @@ per 10 minutes; dashboard insights are cached for an hour per user.
 
 ## Monitoring
 
-- Health: `GET https://api.workwithoddly.com/api/v1/health` → `{"status":"ok","database":"ok"}`.
+- Health: `GET https://scout.remarugsimar.com/api/v1/health` → `{"status":"ok","database":"ok"}`.
   Point an uptime monitor (e.g. UptimeRobot) at it.
-- Logs: the API logs to stdout (`RUST_LOG=oddly_api=info,tower_http=info`). Errors never include
+- Logs: on the VPS, `docker logs scout-api-1` (`RUST_LOG=oddly_api=info,tower_http=info`). Errors never include
   secrets or AI keys.
 - Settings → Activity Log shows security-relevant actions (sign-ins aside): role changes, exports,
   credential reveals, AI lead analyses, deletions.

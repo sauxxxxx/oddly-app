@@ -37,10 +37,12 @@ Website logins are encrypted with AES-256-GCM (`SECRETS_KEY`), revealed only to 
 
 ## HTTP hardening
 
-- CORS limited to the desktop app's origins (plus a web version's address, if one is published).
+- CORS limited to the desktop app's origins.
 - Installers and `latest.json` are served from a private bucket; only file names of the form
   `ODDLY_<version>_x64-setup.exe` can be requested, through 10-minute signed links.
-- Per-IP rate limit (client IP from `X-Forwarded-For` only when `TRUST_PROXY=true`).
+- Per-IP rate limit. With `TRUST_PROXY=true` the client IP comes from the proxy; nginx replaces
+  `X-Forwarded-For`, so clients can't fake it.
+- The API listens only on `127.0.0.1`; the internet reaches it through nginx over HTTPS.
 - 2 MB request body limit; uploads go straight to Supabase Storage through short-lived signed URLs.
 - 150 s request timeout; panics return a 500 instead of dropping the connection.
 - Responses carry `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`,
