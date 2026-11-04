@@ -1,15 +1,15 @@
 # ODDLY API on the shared VPS. nginx terminates HTTPS and forwards to 127.0.0.1:3201.
-# Secrets live only in /opt/oddly/.env on the server (chmod 600), never in this repo.
+# Secrets live only in /opt/scout/.env on the server (chmod 600), never in this repo.
 # Deployed by scripts/deploy-vps.ps1.
 
-name: oddly
+name: scout
 
 services:
   api:
-    image: oddly-api:local
+    image: scout-api:local
     restart: unless-stopped
     env_file:
-      - path: /opt/oddly/.env
+      - path: /opt/scout/.env
         format: raw
     environment:
       # These override anything in .env (which is a copy of the development file).

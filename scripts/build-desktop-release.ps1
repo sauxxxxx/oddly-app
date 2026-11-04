@@ -5,7 +5,7 @@
 # Output: release\updates\ (installer + latest.json). Unless -SkipUpload is given, both are
 # uploaded to the private Supabase Storage bucket `releases` (using backend\.env), where the
 # API serves them: installed apps update themselves and new teammates download from
-#   https://api.workwithoddly.com/api/v1/updates/download
+#   https://scout.remarugsimar.com/api/v1/updates/download
 # The installer talks to the API in desktop\.env.production.
 #
 # Needs the updater signing key at %USERPROFILE%\.tauri\oddly-updater.key (never commit it).
@@ -57,7 +57,7 @@ $manifest = [ordered]@{
     platforms = [ordered]@{
         "windows-x86_64" = [ordered]@{
             signature = $sig.Trim()
-            url       = "https://api.workwithoddly.com/api/v1/updates/$fileName"
+            url       = "https://scout.remarugsimar.com/api/v1/updates/$fileName"
         }
     }
 }
@@ -98,4 +98,4 @@ foreach ($item in $files) {
     }
 }
 Write-Host ""
-Write-Host "Published. New teammates download from https://api.workwithoddly.com/api/v1/updates/download"
+Write-Host "Published. New teammates download from https://scout.remarugsimar.com/api/v1/updates/download"
