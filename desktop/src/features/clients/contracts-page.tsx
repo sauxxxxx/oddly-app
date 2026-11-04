@@ -35,7 +35,7 @@ export function ContractsPage() {
   const [tab, setTab] = React.useState<"all" | "expiring" | "expired">("all");
   return (
     <>
-      <PageHeader title="Contracts" description="Agreements with clients, their terms and signed documents." />
+      <PageHeader title="Contracts" />
       <Tabs
         className="mb-4"
         value={tab}
@@ -69,7 +69,7 @@ export function ContractsTable({ clientId, expiringDays, status, showClient }: {
       ) : contracts.isPending ? (
         <div className="p-6"><ListSkeleton rows={3} /></div>
       ) : contracts.data.length === 0 ? (
-        <EmptyState icon={FileSignature} title="No contracts" description={clientId ? "Record the agreement and attach the signed document." : "Contracts are added from each client's page."} />
+        <EmptyState title="No contracts" />
       ) : (
         <ul className="divide-y divide-line/60">
           {contracts.data.map((k) => {
@@ -80,10 +80,10 @@ export function ContractsTable({ clientId, expiringDays, status, showClient }: {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{k.title}</p>
                   <p className="truncate text-xs text-subtle">
-                    {showClient && <><Link to={`/clients/record/${k.client_id}`} className="text-accent hover:underline">{k.client_name}</Link> · </>}
+                    {showClient && <><Link to={`/clients/record/${k.client_id}`} className="text-accent hover:underline">{k.client_name}</Link>, </>}
                     {k.start_date ? formatPlainDate(k.start_date, { month: "short", day: "numeric", year: "numeric" }) : "No start"} – {k.end_date ? formatPlainDate(k.end_date, { month: "short", day: "numeric", year: "numeric" }) : "open-ended"}
-                    {k.billing_cycle && ` · ${humanize(k.billing_cycle)}`}
-                    {` · ${k.documents} document${k.documents === 1 ? "" : "s"}`}
+                    {k.billing_cycle && `, ${humanize(k.billing_cycle)}`}
+                    {`, ${k.documents} document${k.documents === 1 ? "" : "s"}`}
                   </p>
                 </div>
                 {ending && <span className={cn("text-xs", k.days_left! <= 7 ? "text-danger-fg" : "text-warning-fg")}>Ends in {k.days_left} day{k.days_left === 1 ? "" : "s"}</span>}
@@ -155,7 +155,7 @@ function ContractDialog({ clientId, contract, onClose }: { clientId: string; con
             </Field>
             <Field label="Billing cycle" htmlFor="k-cycle">
               <Select id="k-cycle" value={f.billing_cycle} onChange={(e) => setF({ ...f, billing_cycle: e.target.value })}>
-                <option value="">—</option><option value="one_time">One-time</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option>
+                <option value="">None</option><option value="one_time">One-time</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option>
               </Select>
             </Field>
             <Field label="Start" htmlFor="k-start"><Input id="k-start" type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></Field>

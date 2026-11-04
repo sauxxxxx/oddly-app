@@ -41,7 +41,7 @@ export function ChangePasswordPage() {
   return (
     <AuthLayout
       title="Choose your password"
-      subtitle={`Hi ${me.full_name.split(" ")[0]} — you signed in with a temporary password. Pick your own to continue.`}
+      subtitle="You signed in with a temporary password. Choose a new one to continue."
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         {save.isError && !(save.error instanceof ApiError && save.error.code === "validation_failed") && (

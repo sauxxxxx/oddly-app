@@ -1,4 +1,3 @@
-import { Microscope } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
 
@@ -25,7 +24,6 @@ export function LeadResearchPage() {
     <>
       <PageHeader
         title="Lead research"
-        description="Score each business's website, social media and branding, then plan the outreach."
       />
       <Tabs
         className="mb-4"
@@ -44,9 +42,7 @@ export function LeadResearchPage() {
           <ErrorState error={leads.error} onRetry={() => void leads.refetch()} />
         ) : leads.data?.total === 0 ? (
           <EmptyState
-            icon={Microscope}
             title={researched === "todo" ? "Nothing waiting for research" : "No researched leads yet"}
-            description={researched === "todo" ? "Every active lead you can see has been researched." : "Open a lead and use its Research tab."}
           />
         ) : (
           <>

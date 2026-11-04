@@ -1,6 +1,6 @@
 import * as Popover from "@radix-ui/react-popover";
 import { useQuery } from "@tanstack/react-query";
-import { Check, ChevronDown, Copy, PenLine, Search, Sparkles, X } from "lucide-react";
+import { Check, ChevronDown, Copy, Search, X } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export function RecordPicker({
         <Popover.Content
           align="start"
           sideOffset={6}
-          className="z-[60] w-[var(--radix-popover-trigger-width)] min-w-64 animate-pop-in rounded-xl border border-line bg-overlay p-1.5 shadow-pop focus:outline-none"
+          className="z-[60] w-[var(--radix-popover-trigger-width)] min-w-64 rounded-md border border-line bg-overlay p-1.5 shadow-pop focus:outline-none"
         >
           <div className="relative mb-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-subtle" />
@@ -114,7 +114,7 @@ export function RecordPicker({
                       onChange({ type, id: r.id, name: r.name });
                       setOpen(false);
                     }}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-raised"
+                    className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-raised"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-fg">{r.name}</span>
@@ -285,7 +285,7 @@ export function DraftWriter({
           />
         </Field>
         <Button type="submit" disabled={!recordOk || !notesOk || draft.isPending}>
-          <Sparkles /> {draft.isPending ? "Writing…" : text ? "Write again" : "Write draft"}
+          {draft.isPending ? "Writing…" : text ? "Write again" : "Write draft"}
         </Button>
         {draft.isError && <p className="text-sm text-danger-fg">{errorMessage(draft.error)}</p>}
       </form>
@@ -293,7 +293,7 @@ export function DraftWriter({
       <div className="flex min-h-80 flex-col rounded-card border border-line bg-raised/40">
         <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
           <span className="flex items-center gap-2 text-xs font-medium text-accent-fg">
-            <Sparkles className="size-3.5" /> AI draft — review before using
+            AI draft. Review before using.
           </span>
           {text && <CopyButton text={text} />}
         </div>
@@ -306,8 +306,8 @@ export function DraftWriter({
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-subtle">
-            <PenLine className="size-5" />
-            {draft.isPending ? "Writing your draft…" : "Your draft appears here. Edit it, then copy it — ODDLY never sends it for you."}
+            
+            {draft.isPending ? "Writing your draft…" : "Your draft appears here. Nothing is sent."}
           </div>
         )}
       </div>
@@ -331,7 +331,7 @@ export function DraftDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title={`Draft with AI — ${record.name}`} description="Suggestions only. Edit and copy what you want; nothing is sent." className="max-w-4xl">
+      <DialogContent title={`Draft for ${record.name}`} description="Nothing is sent." className="max-w-4xl">
         <DraftWriter initialKind={kind} initialRecord={record} lockRecord kinds={kinds} />
       </DialogContent>
     </Dialog>

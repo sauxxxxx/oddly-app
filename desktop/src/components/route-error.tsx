@@ -1,4 +1,4 @@
-import { RefreshCw, TriangleAlert } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useRouteError } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,6 @@ export function RouteError() {
   return (
     <div className="flex h-full items-center justify-center bg-canvas p-8">
       <div className="flex max-w-md flex-col items-center gap-4 text-center">
-        <div className="flex size-12 items-center justify-center rounded-2xl border border-danger/25 bg-danger-soft text-danger">
-          <TriangleAlert className="size-6" />
-        </div>
         <div>
           <h1 className="text-lg font-semibold">Something went wrong on this screen</h1>
           <p className="mt-1.5 text-sm text-muted">Your data is safe. Reload to continue.</p>

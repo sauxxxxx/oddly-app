@@ -1,4 +1,4 @@
-import { Handshake, MoreHorizontal, Pencil, RotateCcw, Search, ThumbsDown, Trash2, Trophy, UserPlus } from "lucide-react";
+import { MoreHorizontal, Search } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -10,7 +10,13 @@ import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable, Pagination, type Column } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs } from "@/components/ui/form-controls";
 import { Field, Input } from "@/components/ui/input";
 import { useAuth, useMe } from "@/features/auth/auth-context";
@@ -65,7 +71,7 @@ export function DealsPage() {
 
   return (
     <>
-      <PageHeader title="Deals" description="Priced opportunities. Revenue figures come from won deals, per currency." />
+      <PageHeader title="Deals" />
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 border-b border-line p-4">
           <Tabs
@@ -81,7 +87,7 @@ export function DealsPage() {
         {deals.isError ? (
           <ErrorState error={deals.error} onRetry={() => void deals.refetch()} />
         ) : deals.data?.total === 0 ? (
-          <EmptyState icon={Handshake} title="No deals here" description="Open a deal from a lead once there's a price on the table." />
+          <EmptyState title="No deals here" />
         ) : (
           <>
             <DataTable columns={columns} rows={deals.data?.items ?? []} loading={deals.isPending} onRowClick={(d) => d.lead_id && navigate(`/leads/record/${d.lead_id}`)} />
@@ -111,14 +117,14 @@ export function DealActions({ deal: d }: { deal: Deal }) {
           <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${d.title}`}><MoreHorizontal /></Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setEditing(true)}><Pencil /> Edit</DropdownMenuItem>
-          {d.status === "open" && <DropdownMenuItem onSelect={() => close.mutate({ id: d.id, status: "won" })}><Trophy /> Mark won</DropdownMenuItem>}
-          {d.status === "open" && <DropdownMenuItem onSelect={() => setLosing(true)}><ThumbsDown /> Mark lost</DropdownMenuItem>}
-          {d.status !== "open" && <DropdownMenuItem onSelect={() => close.mutate({ id: d.id, status: "open" })}><RotateCcw /> Reopen</DropdownMenuItem>}
-          {d.status === "won" && d.lead_id && !d.client_id && <DropdownMenuItem onSelect={() => setConverting(true)}><UserPlus /> Convert to client</DropdownMenuItem>}
-          {d.client_id && <DropdownMenuItem asChild><Link to={`/clients/record/${d.client_id}`}><UserPlus /> Open client</Link></DropdownMenuItem>}
+          <DropdownMenuItem onSelect={() => setEditing(true)}>Edit</DropdownMenuItem>
+          {d.status === "open" && <DropdownMenuItem onSelect={() => close.mutate({ id: d.id, status: "won" })}>Mark won</DropdownMenuItem>}
+          {d.status === "open" && <DropdownMenuItem onSelect={() => setLosing(true)}>Mark lost</DropdownMenuItem>}
+          {d.status !== "open" && <DropdownMenuItem onSelect={() => close.mutate({ id: d.id, status: "open" })}>Reopen</DropdownMenuItem>}
+          {d.status === "won" && d.lead_id && !d.client_id && <DropdownMenuItem onSelect={() => setConverting(true)}>Convert to client</DropdownMenuItem>}
+          {d.client_id && <DropdownMenuItem asChild><Link to={`/clients/record/${d.client_id}`}>Open client</Link></DropdownMenuItem>}
           <DropdownMenuSeparator />
-          <DropdownMenuItem destructive onSelect={() => setDeleting(true)}><Trash2 /> Delete</DropdownMenuItem>
+          <DropdownMenuItem destructive onSelect={() => setDeleting(true)}>Delete</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {close.isError && <p className="text-xs text-danger">{errorMessage(close.error)}</p>}
@@ -144,7 +150,7 @@ export function DealActions({ deal: d }: { deal: Deal }) {
           presetServices={[{ name: d.title, price: d.value, currency: d.currency, billing_type: "monthly" }]}
         />
       )}
-      <ConfirmDialog open={deleting} onOpenChange={setDeleting} title="Delete this deal?" description={`${d.title} · ${formatMoney(d.value, d.currency)}`} onConfirm={() => remove.mutateAsync(d.id)} />
+      <ConfirmDialog open={deleting} onOpenChange={setDeleting} title="Delete this deal?" description={`${d.title}, ${formatMoney(d.value, d.currency)}`} onConfirm={() => remove.mutateAsync(d.id)} />
     </div>
   );
 }

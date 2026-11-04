@@ -66,7 +66,7 @@ export function TaskBoard({ tasks, onOpen }: { tasks: Task[]; onOpen: (id: strin
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragging(t); }}
                       onDragEnd={() => { setDragging(null); setOver(null); }}
                       onClick={() => onOpen(t.id)}
-                      className="cursor-grab rounded-xl border border-line bg-raised/70 p-3 transition-colors hover:border-line-strong active:cursor-grabbing"
+                      className="cursor-grab rounded-md border border-line bg-raised/70 p-3 transition-colors hover:border-line-strong active:cursor-grabbing"
                     >
                       <p className="text-sm font-medium leading-snug">{t.title}</p>
                       <p className="mt-0.5 truncate text-xs text-subtle">{t.project_name ?? t.client_name ?? "No project"}</p>

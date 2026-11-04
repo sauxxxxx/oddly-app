@@ -52,7 +52,7 @@ export async function exportReportPdf(report: ReportDoc, preparedBy: string) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...MUTED);
-  doc.text(`${report.period}  ·  Prepared by ${preparedBy}  ·  ODDLY`, M, 70);
+  doc.text(`${report.period}, Prepared by ${preparedBy}, ODDLY`, M, 70);
   let y = 86;
   if (report.note) {
     const lines = doc.splitTextToSize(report.note, W - 2 * M) as string[];

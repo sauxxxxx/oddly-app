@@ -74,7 +74,7 @@ function NavHeader({ title, onTitle, onPrev, onNext, prevLabel, nextLabel }: {
   prevLabel: string;
   nextLabel: string;
 }) {
-  const arrow = "flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-raised hover:text-fg";
+  const arrow = "flex size-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-raised hover:text-fg";
   return (
     <div className="mb-2 flex items-center justify-between gap-1">
       <button type="button" aria-label={prevLabel} onClick={onPrev} className={arrow}><ChevronLeft className="size-4" /></button>
@@ -82,7 +82,7 @@ function NavHeader({ title, onTitle, onPrev, onNext, prevLabel, nextLabel }: {
         type="button"
         onClick={onTitle}
         disabled={!onTitle}
-        className="rounded-lg px-2.5 py-1 text-sm font-medium text-fg transition-colors enabled:hover:bg-raised"
+        className="rounded-md px-2.5 py-1 text-sm font-medium text-fg transition-colors enabled:hover:bg-raised"
       >
         {title}
       </button>
@@ -98,7 +98,7 @@ function Tile({ label, active, current, disabled, onClick }: { label: string; ac
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "h-10 rounded-lg text-sm transition-colors disabled:opacity-30",
+        "h-10 rounded-md text-sm transition-colors disabled:opacity-30",
         active ? "bg-accent font-medium text-white" : "text-fg enabled:hover:bg-raised",
         !active && current && "text-accent-fg",
       )}
@@ -225,7 +225,7 @@ export function DatePicker({
             e.preventDefault();
             requestAnimationFrame(() => grid.current?.querySelector<HTMLButtonElement>('[tabindex="0"]')?.focus());
           }}
-          className="z-[60] w-[19.5rem] animate-pop-in rounded-card border border-line bg-overlay p-3 shadow-pop focus:outline-none"
+          className="z-[60] w-[19.5rem] rounded-card border border-line bg-overlay p-3 shadow-pop focus:outline-none"
         >
           {view === "days" && (
             <>
@@ -255,7 +255,7 @@ export function DatePicker({
                       onClick={() => pick(day)}
                       onFocus={() => setFocusDay(day)}
                       className={cn(
-                        "flex h-8 items-center justify-center rounded-lg text-sm tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30",
+                        "flex h-8 items-center justify-center rounded-md text-sm tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30",
                         active ? "bg-accent font-medium text-white" : "enabled:hover:bg-raised",
                         !active && (inMonth ? "text-fg" : "text-subtle/70"),
                         !active && day === today && "font-medium text-accent-fg ring-1 ring-inset ring-accent/50",

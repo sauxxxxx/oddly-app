@@ -26,7 +26,7 @@ export function ThemeSwitch({ className, compact }: { className?: string; compac
             setPreference(value);
           }}
           className={cn(
-            "flex items-center gap-1.5 rounded-[9px] px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+            "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
             preference === value ? "bg-card text-fg shadow-sm" : "text-subtle hover:text-fg",
           )}
         >

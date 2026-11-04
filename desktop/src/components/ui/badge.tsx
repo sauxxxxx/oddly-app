@@ -3,23 +3,20 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11.5px] font-medium leading-4",
-  {
-    variants: {
-      tone: {
-        neutral: "border-line bg-raised text-muted",
-        accent: "border-accent/25 bg-accent-soft text-accent-fg",
-        magenta: "border-magenta/25 bg-magenta-soft text-magenta-fg",
-        success: "border-success/25 bg-success-soft text-success-fg",
-        warning: "border-warning/25 bg-warning-soft text-warning-fg",
-        danger: "border-danger/25 bg-danger-soft text-danger-fg",
-        info: "border-info/25 bg-info-soft text-info-fg",
-      },
+const badgeVariants = cva("inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium", {
+  variants: {
+    tone: {
+      neutral: "text-muted",
+      accent: "text-accent-fg",
+      magenta: "text-accent-fg",
+      success: "text-success-fg",
+      warning: "text-warning-fg",
+      danger: "text-danger-fg",
+      info: "text-info-fg",
     },
-    defaultVariants: { tone: "neutral" },
   },
-);
+  defaultVariants: { tone: "neutral" },
+});
 
 export type BadgeTone = NonNullable<VariantProps<typeof badgeVariants>["tone"]>;
 

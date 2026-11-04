@@ -82,7 +82,7 @@ export function DateRangePicker({
         <Popover.Content
           align="end"
           sideOffset={8}
-          className="z-50 flex w-[440px] animate-pop-in overflow-hidden rounded-card border border-line bg-overlay shadow-pop focus:outline-none"
+          className="z-50 flex w-[440px] overflow-hidden rounded-card border border-line bg-overlay shadow-pop focus:outline-none"
         >
           <ul className="w-44 border-r border-line p-1.5">
             {PRESETS.map((p) => (
@@ -93,7 +93,7 @@ export function DateRangePicker({
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-raised",
+                    "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-raised",
                     value.preset === p.key ? "text-fg" : "text-muted",
                   )}
                 >

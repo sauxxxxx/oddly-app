@@ -1,16 +1,4 @@
-import {
-  CalendarClock,
-  CalendarDays,
-  Check,
-  MapPin,
-  MessageSquare,
-  Pencil,
-  Plus,
-  Repeat,
-  Search,
-  Trash2,
-  Video,
-} from "lucide-react";
+import { Check, MapPin, Pencil, Plus, Repeat, Search, Trash2, Video } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 
@@ -32,7 +20,14 @@ import { cn } from "@/lib/utils";
 import type { FollowUp, Meeting } from "@/types/sales";
 import { CHANNEL_LABELS, type Channel } from "@/types/sales";
 
-import { useCompleteFollowUp, useDeleteFollowUp, useDeleteMeeting, useFollowUps, useInteractions, useMeetings } from "./api";
+import {
+  useCompleteFollowUp,
+  useDeleteFollowUp,
+  useDeleteMeeting,
+  useFollowUps,
+  useInteractions,
+  useMeetings,
+} from "./api";
 import { FollowUpDialog, MeetingDialog } from "./dialogs";
 
 // ---------------------------------------------------------------------------
@@ -55,7 +50,7 @@ export function OutreachPage() {
 
   return (
     <>
-      <PageHeader title="Outreach history" description="Every call, message, visit and note logged against a lead." />
+      <PageHeader title="Outreach history" />
       <Card className="overflow-hidden">
         <div className="flex flex-wrap gap-2 border-b border-line p-4">
           <div className="relative min-w-60 flex-1">
@@ -76,7 +71,7 @@ export function OutreachPage() {
         ) : data.isPending ? (
           <div className="p-6"><ListSkeleton rows={6} /></div>
         ) : data.data.items.length === 0 ? (
-          <EmptyState icon={MessageSquare} title="No outreach logged" description="Use “Log outreach” on a lead after every call, message or visit." />
+          <EmptyState title="No outreach logged" />
         ) : (
           <>
             <ul className="divide-y divide-line/60">
@@ -89,7 +84,7 @@ export function OutreachPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm">
                       <Link to={`/leads/record/${i.lead_id}`} className="font-medium hover:underline">{i.business_name}</Link>
-                      <span className="text-subtle"> · {CHANNEL_LABELS[i.channel]}{i.direction === "inbound" ? " (incoming)" : ""}</span>
+                      <span className="text-subtle">, {CHANNEL_LABELS[i.channel]}{i.direction === "inbound" ? " (incoming)" : ""}</span>
                     </p>
                     {i.subject && <p className="mt-1 text-sm font-medium text-muted">{i.subject}</p>}
                     {i.body && <p className="mt-1 whitespace-pre-wrap text-sm text-muted">{i.body}</p>}
@@ -124,7 +119,6 @@ export function FollowUpsPage() {
     <>
       <PageHeader
         title="Follow-ups"
-        description="Reminders to get back to prospects and clients. You're notified when one is due."
         actions={can("sales.manage") && <Button onClick={() => setCreating(true)}><Plus /> New follow-up</Button>}
       />
       <div className="mb-4 flex flex-wrap gap-2">
@@ -136,7 +130,7 @@ export function FollowUpsPage() {
       ) : data.isPending ? (
         <Card className="p-6"><ListSkeleton rows={5} /></Card>
       ) : items.length === 0 ? (
-        <Card><EmptyState icon={CalendarClock} title={status === "pending" ? "Nothing to follow up" : "No completed follow-ups yet"} description="Schedule one from a lead, or when you log outreach." /></Card>
+        <Card><EmptyState title={status === "pending" ? "Nothing to follow up" : "No completed follow-ups yet"} /></Card>
       ) : (
         <div className="flex flex-col gap-4">
           {groups.filter((g) => g.items.length).map((g) => (
@@ -176,7 +170,7 @@ export function FollowUpRow({ item: f, showOwner }: { item: FollowUp; showOwner?
   const related = f.lead_id ? `/leads/record/${f.lead_id}` : f.client_id ? `/clients/record/${f.client_id}` : null;
 
   return (
-    <li className="group flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-raised/50">
+    <li className="group flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-raised/50">
       {f.status === "pending" && can("sales.manage") ? (
         <button
           aria-label={`Mark “${f.title}” done`}
@@ -193,11 +187,11 @@ export function FollowUpRow({ item: f, showOwner }: { item: FollowUp; showOwner?
         <p className={cn("truncate text-sm font-medium", f.status === "done" && "text-muted line-through")}>{f.title}</p>
         <p className="truncate text-xs text-subtle">
           {related ? <Link to={related} className="hover:underline">{f.related_name ?? "Record"}</Link> : "General"}
-          {" · "}
+          {", "}
           <span className={f.overdue ? "text-danger-fg" : undefined}>
             {f.status === "done" && f.completed_at ? `done ${formatRelative(f.completed_at)}` : `${formatDate(f.due_at, me.timezone, { weekday: "short", month: "short", day: "numeric" })} ${formatTime(f.due_at, me.timezone)}`}
           </span>
-          {showOwner && f.assigned_name && ` · ${f.assigned_name}`}
+          {showOwner && f.assigned_name && `, ${f.assigned_name}`}
         </p>
         {complete.isError && <p className="text-xs text-danger">{errorMessage(complete.error)}</p>}
       </div>
@@ -241,7 +235,6 @@ export function MeetingsPage() {
     <>
       <PageHeader
         title="Meetings"
-        description="Calls and visits with prospects and clients, with notes and outcomes."
         actions={can("sales.manage") && <Button onClick={() => setCreating(true)}><Plus /> Schedule meeting</Button>}
       />
       <div className="mb-4 flex flex-wrap gap-2">
@@ -253,7 +246,7 @@ export function MeetingsPage() {
       ) : data.isPending ? (
         <Card className="p-6"><ListSkeleton rows={5} /></Card>
       ) : meetings.length === 0 ? (
-        <Card><EmptyState icon={CalendarDays} title={view === "upcoming" ? "No upcoming meetings" : "No past meetings"} description="Schedule meetings from a lead or here." /></Card>
+        <Card><EmptyState title={view === "upcoming" ? "No upcoming meetings" : "No past meetings"} /></Card>
       ) : (
         <div className="flex flex-col gap-4">
           {[...days.entries()].map(([day, list]) => (
@@ -278,7 +271,7 @@ export function MeetingRow({ meeting: m }: { meeting: Meeting }) {
   const [confirm, setConfirm] = React.useState(false);
   const remove = useDeleteMeeting();
   return (
-    <li className="group flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-raised/50">
+    <li className="group flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-raised/50">
       <div className="w-16 shrink-0 text-right">
         <p className="text-sm font-medium tabular-nums">{formatTime(m.starts_at, me.timezone)}</p>
         {m.ends_at && <p className="text-xs tabular-nums text-subtle">{formatTime(m.ends_at, me.timezone)}</p>}
@@ -289,8 +282,8 @@ export function MeetingRow({ meeting: m }: { meeting: Meeting }) {
         <p className="flex items-center gap-1.5 truncate text-xs text-subtle">
           {m.meeting_url ? <Video className="size-3" /> : m.location ? <MapPin className="size-3" /> : null}
           {m.meeting_url ? "Online" : m.location ?? "No location"}
-          {m.related_name && ` · ${m.related_name}`}
-          {m.participants.length > 0 && ` · ${m.participants.map((p) => p.name).filter(Boolean).join(", ")}`}
+          {m.related_name && `, ${m.related_name}`}
+          {m.participants.length > 0 && `, ${m.participants.map((p) => p.name).filter(Boolean).join(", ")}`}
         </p>
       </button>
       {m.status !== "scheduled" && <Badge tone={m.status === "completed" ? "success" : "neutral"}>{humanize(m.status)}</Badge>}

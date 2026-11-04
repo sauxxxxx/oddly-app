@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, Copy, ExternalLink, FileImage, Images, Plus, Search, Settings2, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Copy, ExternalLink, Plus, Search, Settings2, Trash2, Upload } from "lucide-react";
 import * as React from "react";
 
 import { PageHeader } from "@/components/layout/app-shell";
@@ -14,7 +14,14 @@ import { Progress } from "@/components/ui/misc";
 import { openFile } from "@/components/files-panel";
 import { useAuth, useMe } from "@/features/auth/auth-context";
 import { useLookups } from "@/features/leads/api";
-import { useAssetMutations, useAssets, useContentStageMutations, useMovePost, usePosts, type PostQuery } from "@/features/ops/api";
+import {
+  useAssetMutations,
+  useAssets,
+  useContentStageMutations,
+  useMovePost,
+  usePosts,
+  type PostQuery,
+} from "@/features/ops/api";
 import { errorMessage } from "@/lib/api";
 import { openExternal } from "@/lib/external";
 import { formatDate, formatRelative, formatTime, humanize, todayIn } from "@/lib/format";
@@ -61,7 +68,7 @@ function useContentFilters() {
 
 function StagePill({ post }: { post: Post }) {
   return (
-    <span className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium" style={{ color: post.stage_color, borderColor: `${post.stage_color}55`, background: `${post.stage_color}1a` }}>
+    <span className="shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium" style={{ color: post.stage_color, borderColor: `${post.stage_color}55`, background: `${post.stage_color}1a` }}>
       {post.stage_name}
     </span>
   );
@@ -73,10 +80,9 @@ function PostRow({ post: p, onOpen, extra }: { post: Post; onOpen: () => void; e
   return (
     <li className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-raised/40">
       <button onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-4 text-left">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-line bg-raised text-subtle"><FileImage className="size-4" /></span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{p.title}</p>
-          <p className="truncate text-xs text-subtle">{p.client_name} · {PLATFORM_LABELS[p.platform]} · {humanize(p.content_type)}{p.designer_name && ` · ${p.designer_name}`}</p>
+          <p className="truncate text-xs text-subtle">{p.client_name}, {PLATFORM_LABELS[p.platform]}, {humanize(p.content_type)}{p.designer_name && `, ${p.designer_name}`}</p>
         </div>
         <span className="whitespace-nowrap text-xs text-subtle">{when ? `${formatDate(when, me.timezone)} ${formatTime(when, me.timezone)}` : "Unscheduled"}</span>
         <StagePill post={p} />
@@ -106,7 +112,7 @@ export function ContentCalendarPage() {
   }
   return (
     <>
-      <PageHeader title="Content calendar" description="What's publishing when, for every client." actions={can("content.manage") && <Button onClick={() => dialog.open(null, { client_id: client || undefined })}><Plus /> New post</Button>} />
+      <PageHeader title="Content calendar" actions={can("content.manage") && <Button onClick={() => dialog.open(null, { client_id: client || undefined })}><Plus /> New post</Button>} />
       {bar}
       <Card className="p-5">
         {posts.isError ? <ErrorState error={posts.error} onRetry={() => void posts.refetch()} /> : (
@@ -146,7 +152,6 @@ export function ContentPlannerPage() {
     <>
       <PageHeader
         title="Content planner"
-        description="Every post through the workflow, from idea to published. Drag to move."
         actions={
           <>
             {can("settings.manage") && <Button variant="secondary" onClick={() => setSettings(true)}><Settings2 /> Workflow</Button>}
@@ -187,10 +192,10 @@ export function ContentPlannerPage() {
                         onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragging(p); }}
                         onDragEnd={() => { setDragging(null); setOver(null); }}
                         onClick={() => dialog.open(p.id)}
-                        className="cursor-pointer rounded-xl border border-line bg-raised/70 p-3 transition-colors hover:border-line-strong"
+                        className="cursor-pointer rounded-md border border-line bg-raised/70 p-3 transition-colors hover:border-line-strong"
                       >
                         <p className="text-sm font-medium leading-snug">{p.title}</p>
-                        <p className="mt-0.5 truncate text-xs text-subtle">{p.client_name} · {PLATFORM_LABELS[p.platform]}</p>
+                        <p className="mt-0.5 truncate text-xs text-subtle">{p.client_name}, {PLATFORM_LABELS[p.platform]}</p>
                         {p.publish_at && <p className="mt-1.5 text-xs text-muted">Publishes {formatRelative(p.publish_at)}</p>}
                         {p.last_feedback && s.key === "revision_required" && <p className="mt-1.5 line-clamp-2 text-xs text-warning-fg">{p.last_feedback}</p>}
                       </article>
@@ -226,12 +231,12 @@ function WorkflowSettings({ onClose }: { onClose: () => void }) {
   }
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent title="Content workflow" description="Rename, recolor and reorder stages, or add your own. Built-in stages drive approvals and publishing, so they can't be removed." className="max-w-xl">
+      <DialogContent title="Content workflow" className="max-w-xl">
         {error && <p className="mb-3 text-sm text-danger">{errorMessage(error)}</p>}
         <ul className="flex flex-col gap-2">
           {stages.map((s, i) => (
             <li key={s.id} className="flex items-center gap-2">
-              <input type="color" aria-label={`Color for ${s.name}`} value={s.color} className="size-9 cursor-pointer rounded-lg border border-line bg-raised p-1"
+              <input type="color" aria-label={`Color for ${s.name}`} value={s.color} className="size-9 cursor-pointer rounded-md border border-line bg-raised p-1"
                 onChange={(e) => setStages(stages.map((x) => (x.id === s.id ? { ...x, color: e.target.value } : x)))}
                 onBlur={() => m.update.mutate({ id: s.id, name: s.name, color: s.color.toUpperCase() })} />
               <Input aria-label="Stage name" value={s.name} onChange={(e) => setStages(stages.map((x) => (x.id === s.id ? { ...x, name: e.target.value } : x)))}
@@ -265,12 +270,12 @@ export function ApprovalsPage() {
   const dialog = usePostDialog();
   return (
     <>
-      <PageHeader title="Post approvals" description="Content waiting for internal review or client approval. Open a post to approve it or request changes." />
+      <PageHeader title="Post approvals" />
       {bar}
       <Card className="overflow-hidden">
         {posts.isError ? <ErrorState error={posts.error} onRetry={() => void posts.refetch()} />
           : posts.isPending ? <div className="p-6"><ListSkeleton rows={4} /></div>
-          : posts.data.length === 0 ? <EmptyState icon={Check} title="Nothing waiting for review" description="Posts appear here when they're moved to Internal Review or Client Approval." />
+          : posts.data.length === 0 ? <EmptyState title="Nothing waiting for review" />
           : <ul className="divide-y divide-line/60">{posts.data.map((p) => <PostRow key={p.id} post={p} onOpen={() => dialog.open(p.id)} />)}</ul>}
       </Card>
       {dialog.node}
@@ -285,11 +290,11 @@ export function CaptionsPage() {
   const [copied, setCopied] = React.useState<string | null>(null);
   return (
     <>
-      <PageHeader title="Captions" description="Every caption and its hashtags, ready to copy into the platform." />
+      <PageHeader title="Captions" />
       {bar}
       {posts.isError ? <Card><ErrorState error={posts.error} onRetry={() => void posts.refetch()} /></Card>
         : posts.isPending ? <Card className="p-6"><ListSkeleton rows={4} /></Card>
-        : posts.data.length === 0 ? <Card><EmptyState icon={Copy} title="No captions yet" description="Captions written on posts collect here." /></Card>
+        : posts.data.length === 0 ? <Card><EmptyState title="No captions yet" /></Card>
         : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {posts.data.map((p) => {
@@ -299,7 +304,7 @@ export function CaptionsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <button className="min-w-0 text-left" onClick={() => dialog.open(p.id)}>
                       <p className="truncate text-sm font-medium hover:underline">{p.title}</p>
-                      <p className="truncate text-xs text-subtle">{p.client_name} · {PLATFORM_LABELS[p.platform]}</p>
+                      <p className="truncate text-xs text-subtle">{p.client_name}, {PLATFORM_LABELS[p.platform]}</p>
                     </button>
                     <StagePill post={p} />
                   </div>
@@ -327,12 +332,12 @@ export function PublishedPage() {
   const items = [...(posts.data ?? [])].sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""));
   return (
     <>
-      <PageHeader title="Published content" description="What went live, when, and where." />
+      <PageHeader title="Published content" />
       {bar}
       <Card className="overflow-hidden">
         {posts.isError ? <ErrorState error={posts.error} onRetry={() => void posts.refetch()} />
           : posts.isPending ? <div className="p-6"><ListSkeleton rows={4} /></div>
-          : items.length === 0 ? <EmptyState icon={ExternalLink} title="Nothing published yet" description="Moving a post to Published records the date; add the live link to keep it here." />
+          : items.length === 0 ? <EmptyState title="Nothing published yet" />
           : (
             <ul className="divide-y divide-line/60">
               {items.map((p) => (
@@ -400,7 +405,6 @@ export function MediaLibraryPage() {
     <>
       <PageHeader
         title="Graphics & media"
-        description="Each client's logos, brand guidelines, graphics, videos and fonts — private to the team."
         actions={can("content.manage") && (
           <>
             <Button onClick={() => input.current?.click()} disabled={!client} title={client ? undefined : "Choose a client first"}><Upload /> Upload</Button>
@@ -431,7 +435,7 @@ export function MediaLibraryPage() {
       ))}
       {assets.isError ? <Card><ErrorState error={assets.error} onRetry={() => void assets.refetch()} /></Card>
         : assets.isPending ? <Card className="p-6"><ListSkeleton rows={3} /></Card>
-        : assets.data.length === 0 ? <Card><EmptyState icon={Images} title="No media yet" description="Choose a client and upload their logo, brand guide and graphics." /></Card>
+        : assets.data.length === 0 ? <Card><EmptyState title="No media yet" /></Card>
         : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {assets.data.map((a) => (
@@ -448,7 +452,7 @@ export function MediaLibraryPage() {
                 <div className="flex items-start gap-2 p-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{a.title ?? a.original_name}</p>
-                    <p className="truncate text-xs text-subtle">{a.client_name} · {humanize(a.asset_type)} · {formatBytes(a.size_bytes)}</p>
+                    <p className="truncate text-xs text-subtle">{a.client_name}, {humanize(a.asset_type)}, {formatBytes(a.size_bytes)}</p>
                   </div>
                   {opening === a.id && <span className="text-xs text-subtle">…</span>}
                   {can("content.manage") && (

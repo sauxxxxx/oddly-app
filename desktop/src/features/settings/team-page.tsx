@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, KeyRound, MoreHorizontal, ShieldOff, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { Check, Copy, MoreHorizontal, UserPlus } from "lucide-react";
 import * as React from "react";
 
 import { PageHeader } from "@/components/layout/app-shell";
@@ -46,7 +46,6 @@ export function TeamPage() {
     <>
       <PageHeader
         title="Team members"
-        description="Everyone has their own account. Roles decide what each person can see and do."
         actions={
           manage && (
             <Button onClick={() => setAdding(true)}>
@@ -64,11 +63,11 @@ export function TeamPage() {
         ) : members.isError ? (
           <ErrorState error={members.error} onRetry={() => void members.refetch()} />
         ) : members.data.length === 0 ? (
-          <EmptyState icon={Users} title="No team members" />
+          <EmptyState title="No team members" />
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-line text-left text-xs font-medium uppercase tracking-[0.06em] text-subtle">
+              <tr className="border-b border-line text-left text-xs font-medium text-subtle">
                 <th className="px-6 py-3.5 font-medium">Member</th>
                 <th className="px-4 py-3.5 font-medium">Role</th>
                 <th className="px-4 py-3.5 font-medium">Status</th>
@@ -170,7 +169,7 @@ function MemberRow({
             </p>
             <p className="truncate text-xs text-subtle">
               {m.email}
-              {m.job_title && ` · ${m.job_title}`}
+              {m.job_title && `, ${m.job_title}`}
             </p>
             {error && <p className="mt-1 text-xs text-danger">{error}</p>}
           </div>
@@ -217,16 +216,13 @@ function MemberRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => reset.mutate()}>
-                <KeyRound /> Reset password
+              <DropdownMenuItem onSelect={() => reset.mutate()}>Reset password
               </DropdownMenuItem>
               {m.status === "active" ? (
-                <DropdownMenuItem destructive onSelect={() => update.mutate({ status: "suspended" })}>
-                  <ShieldOff /> Suspend access
+                <DropdownMenuItem destructive onSelect={() => update.mutate({ status: "suspended" })}>Suspend access
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onSelect={() => update.mutate({ status: "active" })}>
-                  <ShieldCheck /> Reactivate
+                <DropdownMenuItem onSelect={() => update.mutate({ status: "active" })}>Reactivate
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -278,7 +274,6 @@ function AddMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title="Add a team member"
-        description="They'll get a temporary password from you and choose their own at first sign-in."
       >
         <form
           noValidate
@@ -347,7 +342,7 @@ function TemporaryPasswordDialog({
       {secret && (
         <DialogContent
           title={secret.reset ? "Password reset" : `${secret.name} has been added`}
-          description="Share this temporary password privately. It's shown only once — ODDLY doesn't store it."
+          description="Share this privately. It's shown only once."
         >
           <div className="rounded-control border border-line bg-raised p-4">
             <p className="text-xs text-subtle">Email</p>

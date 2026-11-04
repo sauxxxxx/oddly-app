@@ -90,7 +90,7 @@ export function TaskDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title={taskId ? (task.data?.title ?? "Task") : "New task"}
-        description={task.data ? [task.data.project_name, task.data.client_name].filter(Boolean).join(" · ") || "No project" : undefined}
+        description={task.data ? [task.data.project_name, task.data.client_name].filter(Boolean).join(", ") || "No project" : undefined}
         className="max-h-[calc(100vh-4rem)] max-w-3xl overflow-y-auto"
       >
         {taskId && task.isPending ? (
@@ -124,7 +124,7 @@ export function TaskDialog({
               <Field label="Project" htmlFor="tk-project" className="col-span-2">
                 <Select id="tk-project" disabled={!editable} value={f.project_id} onChange={(e) => setF({ ...f, project_id: e.target.value })}>
                   <option value="">No project</option>
-                  {projects.data?.map((p) => <option key={p.id} value={p.id}>{p.name}{p.client_name ? ` · ${p.client_name}` : ""}</option>)}
+                  {projects.data?.map((p) => <option key={p.id} value={p.id}>{p.name}{p.client_name ? `, ${p.client_name}` : ""}</option>)}
                 </Select>
               </Field>
               <Field label="Description" htmlFor="tk-desc" className="col-span-2">
@@ -194,7 +194,7 @@ function TaskParts({ taskId, editable }: { taskId: string; editable: boolean }) 
             <li key={c.id} className="group flex gap-2.5">
               <Avatar name={c.author_name ?? "?"} className="size-7 text-[10px]" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-subtle">{c.author_name} · {formatRelative(c.created_at)}</p>
+                <p className="text-xs text-subtle">{c.author_name}, {formatRelative(c.created_at)}</p>
                 <p className="whitespace-pre-wrap text-sm">{c.body}</p>
               </div>
               {(c.author_id === me.id || can("projects.manage")) && (
@@ -205,7 +205,7 @@ function TaskParts({ taskId, editable }: { taskId: string; editable: boolean }) 
           {t.comment_list.length === 0 && <li className="text-sm text-subtle">No comments yet.</li>}
         </ul>
         <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (comment.trim()) parts.addComment.mutate(comment.trim(), { onSuccess: () => setComment("") }); }}>
-          <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} placeholder="Write a comment — the assignee is notified" aria-label="New comment" />
+          <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} placeholder="Write a comment. The assignee is notified" aria-label="New comment" />
           <Button type="submit" variant="secondary" loading={parts.addComment.isPending} className="self-end">Post</Button>
         </form>
       </section>
@@ -232,8 +232,8 @@ export function TaskList({ tasks, onOpen, showProject = true }: { tasks: Task[];
               <p className={cn("truncate text-sm", t.status === "done" ? "text-subtle line-through" : "font-medium")}>{t.title}</p>
               <p className="truncate text-xs text-subtle">
                 {showProject && (t.project_name ?? t.client_name ?? "No project")}
-                {t.subtasks_total > 0 && ` · ${t.subtasks_done}/${t.subtasks_total} subtasks`}
-                {t.comments > 0 && ` · ${t.comments} comment${t.comments === 1 ? "" : "s"}`}
+                {t.subtasks_total > 0 && `, ${t.subtasks_done}/${t.subtasks_total} subtasks`}
+                {t.comments > 0 && `, ${t.comments} comment${t.comments === 1 ? "" : "s"}`}
               </p>
             </div>
             {t.due_at && (

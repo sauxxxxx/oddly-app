@@ -3,7 +3,7 @@ import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router";
 
 import { Button } from "@/components/ui/button";
-import { Kbd, Skeleton } from "@/components/ui/misc";
+import { Kbd } from "@/components/ui/misc";
 import { ALL_MODULES } from "@/config/navigation";
 import { useTheme } from "@/lib/theme";
 import { safeStorage } from "@/lib/utils";
@@ -50,11 +50,11 @@ export function AppShell() {
   }
 
   return (
-    <div className="flex h-full gap-3 bg-canvas p-3">
+    <div className="flex h-full bg-base">
       <Sidebar collapsed={collapsed} onToggle={toggle} onOpenSearch={() => setPaletteOpen(true)} />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-line bg-base">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-line/70 px-7">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-line px-6">
           <Breadcrumbs pathname={pathname} />
           <div className="flex items-center gap-2">
             <button
@@ -72,7 +72,7 @@ export function AppShell() {
         </header>
 
         <main ref={mainRef} className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px] px-7 py-7">
+          <div className="mx-auto w-full max-w-[1500px] px-6 py-5">
             <React.Suspense fallback={<PageLoading />}>
               <Outlet />
             </React.Suspense>
@@ -86,12 +86,7 @@ export function AppShell() {
 }
 
 function PageLoading() {
-  return (
-    <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading page">
-      <Skeleton className="h-10 w-72 rounded-xl" />
-      <Skeleton className="h-64 rounded-card" />
-    </div>
-  );
+  return <p className="text-sm text-subtle">Loading…</p>;
 }
 
 /** One-click dark/light switch (System is in the account menu and My Profile). */
@@ -150,10 +145,10 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-fg">{title}</h1>
-        {description && <p className="mt-1.5 text-sm text-muted">{description}</p>}
+        <h1 className="text-xl font-semibold text-fg">{title}</h1>
+        {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

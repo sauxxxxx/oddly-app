@@ -32,7 +32,6 @@ export function ServicesCatalogPage() {
     <>
       <PageHeader
         title="Services & packages"
-        description="What the agency sells. Used as presets in proposals and when adding services to clients."
         actions={writable && <Button onClick={() => setEditing("new")}><Plus /> New service</Button>}
       />
       <Card className="overflow-hidden">
@@ -41,7 +40,7 @@ export function ServicesCatalogPage() {
         ) : catalog.isPending ? (
           <div className="p-6"><ListSkeleton rows={6} /></div>
         ) : catalog.data.length === 0 ? (
-          <EmptyState icon={Package} title="No services yet" />
+          <EmptyState title="No services yet" />
         ) : (
           <ul className="divide-y divide-line/60">
             {catalog.data.map((s) => (
@@ -49,7 +48,7 @@ export function ServicesCatalogPage() {
                 <Package className="size-4 shrink-0 text-subtle" />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 truncate text-sm font-medium">{s.name}{s.is_package && <Badge tone="accent">Package</Badge>}{!s.is_active && <Badge>Inactive</Badge>}</p>
-                  <p className="truncate text-xs text-subtle">{humanize(s.category)} · {BILLING_LABELS[s.billing_type]}{s.description && ` · ${s.description}`}</p>
+                  <p className="truncate text-xs text-subtle">{humanize(s.category)}, {BILLING_LABELS[s.billing_type]}{s.description && `, ${s.description}`}</p>
                 </div>
                 <span className="text-xs text-subtle">{s.active_clients} client{s.active_clients === 1 ? "" : "s"}</span>
                 <span className="w-32 text-right text-sm tabular-nums text-muted">{s.default_price ? formatMoney(s.default_price, s.currency) : "Price not set"}</span>

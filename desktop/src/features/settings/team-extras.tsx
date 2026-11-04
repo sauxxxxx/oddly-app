@@ -1,4 +1,3 @@
-import { ScrollText, Users } from "lucide-react";
 import * as React from "react";
 
 import { PageHeader } from "@/components/layout/app-shell";
@@ -30,15 +29,15 @@ export function WorkloadCard() {
   const max = Math.max(1, ...(workload.data ?? []).map((w) => w.open_tasks));
   return (
     <Card className="mt-4 overflow-hidden">
-      <CardHeader title="Workload" description="Open work per person across tasks, sales, content and websites." className="pb-4" />
+      <CardHeader title="Workload" className="pb-4" />
       {workload.isError ? <ErrorState error={workload.error} onRetry={() => void workload.refetch()} compact />
         : workload.isPending ? <div className="p-6"><ListSkeleton rows={3} /></div>
-        : workload.data.length === 0 ? <EmptyState icon={Users} title="No team members" compact />
+        : workload.data.length === 0 ? <EmptyState title="No team members" compact />
         : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
-                <tr className="border-y border-line text-left text-xs uppercase tracking-[0.06em] text-subtle">
+                <tr className="border-y border-line text-left text-xs text-subtle">
                   <th className="px-5 py-3 font-medium">Member</th>
                   {cols.map(([, label]) => <th key={label} className="px-3 py-3 text-right font-medium">{label}</th>)}
                 </tr>
@@ -78,7 +77,7 @@ export function AuditLogPage() {
   const log = useAuditLog({ actor_id: actor || undefined, action: action || undefined, page });
   return (
     <>
-      <PageHeader title="Activity log" description="Security-relevant actions: sign-ups, role changes, exports, deletions, credential reveals." />
+      <PageHeader title="Activity log" />
       <Card className="overflow-hidden">
         <div className="flex flex-wrap gap-2 border-b border-line p-4">
           <Select aria-label="Person" value={actor} onChange={(e) => setActor(e.target.value)} className="w-auto min-w-48">
@@ -89,7 +88,7 @@ export function AuditLogPage() {
         </div>
         {log.isError ? <ErrorState error={log.error} onRetry={() => void log.refetch()} />
           : log.isPending ? <div className="p-6"><ListSkeleton rows={6} /></div>
-          : log.data.items.length === 0 ? <EmptyState icon={ScrollText} title="Nothing logged yet" />
+          : log.data.items.length === 0 ? <EmptyState title="Nothing logged yet" />
           : (
             <>
               <ul className="divide-y divide-line/60">

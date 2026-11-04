@@ -1,15 +1,14 @@
-import { ArrowDown, ArrowUp, CalendarClock, Globe, KanbanSquare, Plus, Search, Settings2, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, Globe, Plus, Search, Settings2, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
 
 import { PageHeader } from "@/components/layout/app-shell";
-import { EmptyState, ErrorState } from "@/components/states";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/states";
 import { PriorityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input, Select } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/misc";
 import { useAuth, useMe } from "@/features/auth/auth-context";
 import { useLookups } from "@/features/leads/api";
 import { LeadFormDialog } from "@/features/leads/lead-form";
@@ -45,7 +44,6 @@ export function PipelinePage() {
     <>
       <PageHeader
         title="Sales pipeline"
-        description="Drag leads between stages. Dropping on a won stage offers to convert the lead into a client."
         actions={
           <>
             {can("pipeline.manage") && (
@@ -76,12 +74,10 @@ export function PipelinePage() {
       {board.isError && !board.data ? (
         <Card><ErrorState error={board.error} onRetry={() => void board.refetch()} /></Card>
       ) : !board.data ? (
-        <div className="flex gap-3 overflow-hidden">
-          {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-[60vh] w-72 shrink-0 rounded-card" />)}
-        </div>
+        <ListSkeleton />
       ) : board.data.every((c) => c.count === 0) && !debounced && !market && !assigned ? (
         <Card>
-          <EmptyState icon={KanbanSquare} title="The pipeline is empty" description="Add or import leads and they'll start in the first stage." />
+          <EmptyState title="The pipeline is empty" />
         </Card>
       ) : (
         <Board
@@ -147,7 +143,7 @@ function Board({ columns, onMove }: { columns: PipelineColumn[]; onMove: (card: 
               </div>
               <p className="mt-1 truncate text-xs text-subtle">
                 {Object.entries(col.totals).length
-                  ? Object.entries(col.totals).map(([cur, v]) => formatMoney(v, cur, { compact: true })).join(" · ")
+                  ? Object.entries(col.totals).map(([cur, v]) => formatMoney(v, cur, { compact: true })).join(", ")
                   : "No estimated value"}
               </p>
             </header>
@@ -156,7 +152,7 @@ function Board({ columns, onMove }: { columns: PipelineColumn[]; onMove: (card: 
                 <PipelineCardView key={card.id} card={card} onDragStart={() => setDragging(card)} onDragEnd={() => { setDragging(null); setOver(null); }} />
               ))}
               {col.count > col.cards.length && (
-                <p className="px-2 py-1 text-center text-xs text-subtle">+{col.count - col.cards.length} more — use search or the lead list</p>
+                <p className="px-2 py-1 text-center text-xs text-subtle">+{col.count - col.cards.length} more. Use search or the lead list.</p>
               )}
               {col.count === 0 && <p className="px-2 py-6 text-center text-xs text-subtle">Drop leads here</p>}
             </div>
@@ -180,13 +176,13 @@ function PipelineCardView({ card, onDragStart, onDragEnd }: { card: PipelineCard
       }}
       onDragEnd={onDragEnd}
       onClick={() => navigate(`/leads/record/${card.id}`)}
-      className="cursor-grab rounded-xl border border-line bg-raised/70 p-3 transition-colors hover:border-line-strong active:cursor-grabbing"
+      className="cursor-grab rounded-md border border-line bg-raised/70 p-3 transition-colors hover:border-line-strong active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium leading-snug">{card.business_name}</p>
         {card.market === "international" && <Globe className="mt-0.5 size-3.5 shrink-0 text-subtle" />}
       </div>
-      <p className="mt-0.5 truncate text-xs text-subtle">{[card.contact_name, card.city].filter(Boolean).join(" · ") || "—"}</p>
+      <p className="mt-0.5 truncate text-xs text-subtle">{[card.contact_name, card.city].filter(Boolean).join(", ") || "—"}</p>
       {card.next_action && (
         <p className={cn("mt-2 flex items-center gap-1.5 text-xs", overdue ? "text-danger-fg" : "text-muted")}>
           <CalendarClock className="size-3 shrink-0" />
@@ -226,7 +222,7 @@ function StageSettings({ columns, onClose }: { columns: PipelineColumn[]; onClos
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent title="Pipeline stages" description="Rename, recolor and reorder stages. “Won” and “Lost” types drive reports and conversion." className="max-w-2xl">
+      <DialogContent title="Pipeline stages" className="max-w-2xl">
         {error && <FormError error={error} />}
         <ul className="flex flex-col gap-2">
           {stages.map((s, i) => (
@@ -237,7 +233,7 @@ function StageSettings({ columns, onClose }: { columns: PipelineColumn[]; onClos
                 value={s.color}
                 onChange={(e) => setStages(stages.map((x) => (x.id === s.id ? { ...x, color: e.target.value } : x)))}
                 onBlur={() => update.mutate({ id: s.id, name: s.name, color: s.color.toUpperCase() })}
-                className="size-9 cursor-pointer rounded-lg border border-line bg-raised p-1"
+                className="size-9 cursor-pointer rounded-md border border-line bg-raised p-1"
               />
               <Input
                 aria-label="Stage name"

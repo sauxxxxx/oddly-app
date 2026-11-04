@@ -1,5 +1,5 @@
 /** Projects, Content and Websites tabs on the client workspace (Phase 5). */
-import { FileImage, FolderKanban, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
 
@@ -27,7 +27,7 @@ function ClientProjects({ client }: { client: ClientDetail }) {
       {can("projects.manage") && <Button size="sm" variant="secondary" className="self-end" onClick={() => setCreating(true)}><Plus /> New project</Button>}
       {projects.isError ? <Card><ErrorState error={projects.error} onRetry={() => void projects.refetch()} /></Card>
         : projects.isPending ? <Card className="p-6"><ListSkeleton rows={3} /></Card>
-        : projects.data.length === 0 ? <Card><EmptyState icon={FolderKanban} title="No projects for this client" /></Card>
+        : projects.data.length === 0 ? <Card><EmptyState title="No projects for this client" /></Card>
         : <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{projects.data.map((p) => <ProjectCard key={p.id} project={p} onClick={() => navigate(`/projects/record/${p.id}`)} />)}</div>}
       <ProjectDialog open={creating} onOpenChange={setCreating} clientId={client.id} onSaved={(p) => navigate(`/projects/record/${p.id}`)} />
     </div>
@@ -46,7 +46,7 @@ function ClientContent({ client }: { client: ClientDetail }) {
       </div>
       {posts.isError ? <ErrorState error={posts.error} onRetry={() => void posts.refetch()} />
         : posts.isPending ? <div className="p-6"><ListSkeleton rows={3} /></div>
-        : posts.data.length === 0 ? <EmptyState icon={FileImage} title="No content yet" description="Plan this client's posts here or in the Content Studio." />
+        : posts.data.length === 0 ? <EmptyState title="No content yet" />
         : (
           <ul className="divide-y divide-line/60">
             {posts.data.map((p) => (

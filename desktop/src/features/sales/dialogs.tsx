@@ -564,7 +564,7 @@ export function ConvertDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title={`Convert ${leadName} into a client`}
-        description="The business, contacts and history carry over — nothing is re-entered. Any open deal is marked won."
+        description="Any open deal is marked won."
         className="max-h-[calc(100vh-4rem)] max-w-2xl overflow-y-auto"
       >
         <form

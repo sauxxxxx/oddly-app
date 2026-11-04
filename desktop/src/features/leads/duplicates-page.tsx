@@ -1,4 +1,4 @@
-import { CopyCheck, GitMerge, Lock } from "lucide-react";
+import { GitMerge } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 
@@ -25,16 +25,15 @@ export function DuplicatesPage() {
     <>
       <PageHeader
         title="Duplicate management"
-        description="Leads that share a website, email, phone number, or name and city. Merge them to keep one clean record."
       />
       {!allowed ? (
-        <Card><EmptyState icon={Lock} title="Needs access to all leads" description="Ask an administrator to review duplicates." /></Card>
+        <Card><EmptyState title="Needs access to all leads" description="Ask an administrator to review duplicates." /></Card>
       ) : groups.isPending ? (
         <Card className="p-6"><ListSkeleton rows={5} /></Card>
       ) : groups.isError ? (
         <Card><ErrorState error={groups.error} onRetry={() => void groups.refetch()} /></Card>
       ) : groups.data.length === 0 ? (
-        <Card><EmptyState icon={CopyCheck} title="No duplicates found" description="Imports and new leads are checked automatically, so this should stay clean." /></Card>
+        <Card><EmptyState title="No duplicates found" /></Card>
       ) : (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-muted">{groups.data.length} possible duplicate group{groups.data.length === 1 ? "" : "s"}</p>
@@ -77,9 +76,9 @@ function GroupCard({ group }: { group: DuplicateGroup }) {
               <div className="min-w-0 text-sm">
                 <Link to={`/leads/record/${l.id}`} className="font-medium hover:underline">{l.business_name}</Link>
                 {keep === l.id && <Badge tone="accent" className="ml-2">Keep</Badge>}
-                <p className="truncate text-xs text-subtle">{[l.city, l.contact_name, l.contact_email, l.website_url].filter(Boolean).join(" · ") || "No details"}</p>
+                <p className="truncate text-xs text-subtle">{[l.city, l.contact_name, l.contact_email, l.website_url].filter(Boolean).join(", ") || "No details"}</p>
                 <p className="mt-1 text-xs text-subtle">
-                  {l.stage_name} · {l.assigned_name ?? "Unassigned"} · added {formatDate(l.created_at, me.timezone, { year: "numeric" })}
+                  {l.stage_name}, {l.assigned_name ?? "Unassigned"}, added {formatDate(l.created_at, me.timezone, { year: "numeric" })}
                 </p>
               </div>
             </label>

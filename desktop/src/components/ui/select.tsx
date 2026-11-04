@@ -72,7 +72,7 @@ export const Select = React.forwardRef<HTMLButtonElement, React.SelectHTMLAttrib
             sideOffset={6}
             // Portaled clicks still bubble through React: don't trigger clickable rows behind it.
             onClick={(e) => e.stopPropagation()}
-            className="z-[70] max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] max-w-[min(28rem,calc(100vw-2rem))] animate-pop-in overflow-hidden rounded-xl border border-line bg-overlay shadow-pop"
+            className="z-[70] max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] max-w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-md border border-line bg-overlay shadow-pop"
           >
             <S.ScrollUpButton className="flex h-7 items-center justify-center text-subtle">
               <ChevronUp className="size-4" />
@@ -83,7 +83,7 @@ export const Select = React.forwardRef<HTMLButtonElement, React.SelectHTMLAttrib
                   key={o.value}
                   value={toItem(o.value)}
                   disabled={o.disabled}
-                  className="relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-2.5 pr-8 text-sm text-fg outline-none transition-colors data-[highlighted]:bg-raised data-[state=checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  className="relative flex cursor-pointer select-none items-center rounded-md py-2 pl-2.5 pr-8 text-sm text-fg outline-none transition-colors data-[highlighted]:bg-raised data-[state=checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                 >
                   <S.ItemText>{o.label}</S.ItemText>
                   <S.ItemIndicator className="absolute right-2.5">

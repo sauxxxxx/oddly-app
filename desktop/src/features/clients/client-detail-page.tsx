@@ -1,27 +1,19 @@
 import {
   ArrowLeft,
-  AtSign,
-  Building2,
   CalendarClock,
   CalendarPlus,
   Check,
   ExternalLink,
-  FileSignature,
-  Globe,
   ListChecks,
-  MapPin,
   Package,
   Pencil,
-  Phone,
   Plus,
   Star,
   Trash2,
-  UserRound,
 } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
-import { FacebookIcon, InstagramIcon } from "@/components/brand/social-icons";
 import { FilesPanel } from "@/components/files-panel";
 import { PageHeader } from "@/components/layout/app-shell";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/states";
@@ -30,7 +22,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox, Tabs, Textarea } from "@/components/ui/form-controls";
 import { Field, Input, Select } from "@/components/ui/input";
 import { Avatar, Progress } from "@/components/ui/misc";
@@ -80,7 +77,7 @@ export function ClientDetailPage() {
   if (client.isPending) return <Card className="p-6"><ListSkeleton rows={6} /></Card>;
   if (client.isError) {
     return client.error instanceof ApiError && client.error.status === 404 ? (
-      <Card><EmptyState icon={Building2} title="Client not found" action={<Button asChild variant="secondary" size="sm"><Link to="/clients"><ArrowLeft /> Clients</Link></Button>} /></Card>
+      <Card><EmptyState title="Client not found" action={<Button asChild variant="secondary" size="sm"><Link to="/clients"><ArrowLeft /> Clients</Link></Button>} /></Card>
     ) : (
       <Card><ErrorState error={client.error} onRetry={() => void client.refetch()} /></Card>
     );
@@ -93,11 +90,11 @@ export function ClientDetailPage() {
     <>
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3"><Link to="/clients"><ArrowLeft /> Clients</Link></Button>
       <PageHeader
-        title={<span className="flex items-center gap-3"><Avatar name={c.company.name} className="size-10 rounded-2xl" />{c.company.name}</span>}
+        title={<span className="flex items-center gap-3"><Avatar name={c.company.name} className="size-10 rounded-md" />{c.company.name}</span>}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <ClientStatusBadge status={c.status} />
-            <span>{[c.company.industry, c.company.city, c.company.country].filter(Boolean).join(" · ")}</span>
+            <span>{[c.company.industry, c.company.city, c.company.country].filter(Boolean).join(", ")}</span>
             <span className="text-subtle">· client since {formatPlainDate(c.client_since, { month: "short", year: "numeric" })}</span>
           </span>
         }
@@ -213,7 +210,7 @@ function Onboarding({ client: c }: { client: ClientDetail }) {
                 </li>
               ))}
             </ul>
-            {done === c.onboarding.length && c.status === "onboarding" && <p className="mt-3 text-xs text-success-fg">All done — the client is now active.</p>}
+            {done === c.onboarding.length && c.status === "onboarding" && <p className="mt-3 text-xs text-success-fg">All done. The client is now active.</p>}
           </>
         )}
       </CardBody>
@@ -221,11 +218,10 @@ function Onboarding({ client: c }: { client: ClientDetail }) {
   );
 }
 
-function InfoRow({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="mt-0.5 size-4 shrink-0 text-subtle" />
-      <div className="min-w-0 flex-1">
+    <div className="min-w-0 py-2">
+      <div>
         <p className="text-xs text-subtle">{label}</p>
         <div className="mt-0.5 break-words text-sm">{children}</div>
       </div>
@@ -250,13 +246,13 @@ function Overview({ client: c }: { client: ClientDetail }) {
       <Card>
         <CardHeader title="Business" />
         <CardBody className="pt-2">
-          <InfoRow icon={Building2} label="Industry">{[co.industry, co.category].filter(Boolean).join(" · ") || dash}</InfoRow>
-          <InfoRow icon={MapPin} label="Location">{[co.address, co.city, co.region, co.country].filter(Boolean).join(", ") || dash}</InfoRow>
-          <InfoRow icon={Phone} label="Phone">{co.phone ?? dash}</InfoRow>
-          <InfoRow icon={AtSign} label="Email">{co.email ?? dash}</InfoRow>
-          <InfoRow icon={Globe} label="Website"><LinkValue url={co.website_url} /></InfoRow>
-          <InfoRow icon={FacebookIcon} label="Facebook"><LinkValue url={co.facebook_url} /></InfoRow>
-          <InfoRow icon={InstagramIcon} label="Instagram"><LinkValue url={co.instagram_url} /></InfoRow>
+          <InfoRow label="Industry">{[co.industry, co.category].filter(Boolean).join(", ") || dash}</InfoRow>
+          <InfoRow label="Location">{[co.address, co.city, co.region, co.country].filter(Boolean).join(", ") || dash}</InfoRow>
+          <InfoRow label="Phone">{co.phone ?? dash}</InfoRow>
+          <InfoRow label="Email">{co.email ?? dash}</InfoRow>
+          <InfoRow label="Website"><LinkValue url={co.website_url} /></InfoRow>
+          <InfoRow label="Facebook"><LinkValue url={co.facebook_url} /></InfoRow>
+          <InfoRow label="Instagram"><LinkValue url={co.instagram_url} /></InfoRow>
         </CardBody>
       </Card>
       <div className="flex flex-col gap-4">
@@ -264,8 +260,8 @@ function Overview({ client: c }: { client: ClientDetail }) {
         <Card>
           <CardHeader title="Billing" />
           <CardBody className="pt-2 text-sm">
-            <InfoRow icon={AtSign} label="Billing email">{c.billing_email ?? dash}</InfoRow>
-            <InfoRow icon={MapPin} label="Billing address">{c.billing_address ?? dash}</InfoRow>
+            <InfoRow label="Billing email">{c.billing_email ?? dash}</InfoRow>
+            <InfoRow label="Billing address">{c.billing_address ?? dash}</InfoRow>
             {c.billing_notes && <p className="mt-2 text-muted">{c.billing_notes}</p>}
           </CardBody>
         </Card>
@@ -289,15 +285,15 @@ function Contacts({ client: c }: { client: ClientDetail }) {
       <CardHeader title="Contacts" action={can("clients.manage") && <Button variant="ghost" size="sm" onClick={() => setEditing("new")}><Plus /> Add</Button>} />
       <CardBody>
         {c.contacts.length === 0 ? (
-          <EmptyState icon={UserRound} title="No contacts" compact />
+          <EmptyState title="No contacts" compact />
         ) : (
           <ul className="-mx-2 flex flex-col">
             {c.contacts.map((ct) => (
-              <li key={ct.id} className="group flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-raised/50">
+              <li key={ct.id} className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-raised/50">
                 <Avatar name={ct.full_name} className="size-8 text-[11px]" />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 truncate text-sm font-medium">{ct.full_name}{ct.is_primary && <Star className="size-3 fill-current text-warning" aria-label="Primary contact" />}</p>
-                  <p className="truncate text-xs text-subtle">{[ct.position, ct.email, ct.phone].filter(Boolean).join(" · ") || "—"}</p>
+                  <p className="truncate text-xs text-subtle">{[ct.position, ct.email, ct.phone].filter(Boolean).join(", ") || "—"}</p>
                 </div>
                 {can("clients.manage") && (
                   <Button variant="ghost" size="icon-sm" className="opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label={`Edit ${ct.full_name}`} onClick={() => setEditing(ct)}><Pencil /></Button>
@@ -398,16 +394,16 @@ function Services({ client: c }: { client: ClientDetail }) {
       />
       <CardBody>
         {c.services.length === 0 ? (
-          <EmptyState icon={Package} title="No services yet" description="Add what this client pays for. Recurring services add up to the monthly value." compact />
+          <EmptyState title="No services yet" compact />
         ) : (
           <ul className="-mx-2 flex flex-col">
             {c.services.map((s) => (
-              <li key={s.id} className="group flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-raised/50">
+              <li key={s.id} className="group flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-raised/50">
                 <Package className="size-4 shrink-0 text-subtle" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{s.name}</p>
                   <p className="truncate text-xs text-subtle">
-                    {BILLING_LABELS[s.billing_type]}{s.start_date && ` · since ${formatPlainDate(s.start_date, { month: "short", year: "numeric" })}`}{s.end_date && ` · until ${formatPlainDate(s.end_date, { month: "short", day: "numeric", year: "numeric" })}`}
+                    {BILLING_LABELS[s.billing_type]}{s.start_date && `, since ${formatPlainDate(s.start_date, { month: "short", year: "numeric" })}`}{s.end_date && `, until ${formatPlainDate(s.end_date, { month: "short", day: "numeric", year: "numeric" })}`}
                   </p>
                 </div>
                 <span className="text-sm tabular-nums">{formatMoney(s.price, s.currency)}</span>
@@ -543,23 +539,23 @@ function Activity({ client: c }: { client: ClientDetail }) {
         <Card>
           <CardHeader title="Follow-ups" action={can("sales.manage") && <Button variant="ghost" size="sm" onClick={() => setOpen("follow")}><CalendarClock /> Add</Button>} />
           <CardBody>
-            {followUps.data?.items.length ? <ul className="-mx-2">{followUps.data.items.map((f) => <FollowUpRow key={f.id} item={f} showOwner />)}</ul> : <EmptyState icon={CalendarClock} title="No follow-ups" compact />}
+            {followUps.data?.items.length ? <ul className="-mx-2">{followUps.data.items.map((f) => <FollowUpRow key={f.id} item={f} showOwner />)}</ul> : <EmptyState title="No follow-ups" compact />}
           </CardBody>
         </Card>
         <Card>
           <CardHeader title="Meetings" action={can("sales.manage") && <Button variant="ghost" size="sm" onClick={() => setOpen("meet")}><CalendarPlus /> Add</Button>} />
           <CardBody>
-            {meetings.data?.length ? <ul className="-mx-2">{meetings.data.map((m) => <MeetingRow key={m.id} meeting={m} />)}</ul> : <EmptyState icon={CalendarPlus} title="No meetings" compact />}
+            {meetings.data?.length ? <ul className="-mx-2">{meetings.data.map((m) => <MeetingRow key={m.id} meeting={m} />)}</ul> : <EmptyState title="No meetings" compact />}
           </CardBody>
         </Card>
       </div>
       <Card>
-        <CardHeader title="History" description="Including the time before they became a client" />
+        <CardHeader title="History" />
         <CardBody>
           {history.isPending ? (
             <ListSkeleton rows={4} />
           ) : !history.data?.length ? (
-            <EmptyState icon={FileSignature} title="No history yet" compact />
+            <EmptyState title="No history yet" compact />
           ) : (
             <ol className="relative flex flex-col gap-4 before:absolute before:bottom-2 before:left-[17px] before:top-2 before:w-px before:bg-line">
               {history.data.map((h) => (
@@ -568,7 +564,7 @@ function Activity({ client: c }: { client: ClientDetail }) {
                   <div className="min-w-0 pt-0.5">
                     <p className="text-sm">{h.summary}</p>
                     {h.detail && <p className="mt-0.5 line-clamp-3 text-sm text-muted">{h.detail}</p>}
-                    <p className="mt-0.5 text-xs text-subtle">{formatRelative(h.occurred_at)} · {formatDate(h.occurred_at, me.timezone, { year: "numeric" })}</p>
+                    <p className="mt-0.5 text-xs text-subtle">{formatRelative(h.occurred_at)}, {formatDate(h.occurred_at, me.timezone, { year: "numeric" })}</p>
                   </div>
                 </li>
               ))}

@@ -1,5 +1,4 @@
 /** AI features contributed to other screens: "Draft with AI" on lead and client pages. */
-import { Sparkles } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ function LeadDraftAction({ lead }: { lead: LeadDetail }) {
   return (
     <>
       <Button variant="secondary" onClick={() => setOpen(true)}>
-        <Sparkles /> Draft with AI
+        Draft with AI
       </Button>
       {open && (
         <DraftDialog
@@ -40,7 +39,7 @@ function ClientAiTab({ client }: { client: ClientDetail }) {
   if (!me?.ai_configured || !can("ai.use")) return <Card><CardBody className="pt-5"><AiUnavailable configured={!!me?.ai_configured} /></CardBody></Card>;
   return (
     <Card>
-      <CardHeader title="Draft with AI" description="Suggestions only — edit and copy what you want; nothing is sent or saved." />
+      <CardHeader title="Draft with AI" description="Nothing is sent or saved." />
       <CardBody>
         <DraftWriter
           initialKind="client_summary"

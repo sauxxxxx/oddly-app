@@ -46,7 +46,7 @@ export function NotificationBell() {
         <Popover.Content
           align="end"
           sideOffset={10}
-          className="z-50 w-[380px] animate-pop-in rounded-card border border-line bg-overlay shadow-pop focus:outline-none"
+          className="z-50 w-[380px] rounded-card border border-line bg-overlay shadow-pop focus:outline-none"
         >
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <p className="text-sm font-semibold">Notifications</p>
@@ -68,14 +68,14 @@ export function NotificationBell() {
             ) : query.isError ? (
               <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
             ) : query.data.items.length === 0 ? (
-              <EmptyState icon={Bell} title="You're all caught up" description="Reminders and mentions will show up here." compact />
+              <EmptyState title="You're all caught up" compact />
             ) : (
               <ul className="flex flex-col">
                 {query.data.items.map((n) => (
                   <li key={n.id}>
                     <button
                       onClick={() => !n.read_at && markRead.mutate(n.id)}
-                      className="flex w-full gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-raised"
+                      className="flex w-full gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-raised"
                     >
                       <span
                         className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.read_at ? "bg-transparent" : "bg-accent")}

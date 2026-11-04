@@ -48,7 +48,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in with the account your administrator created for you.">
+    <AuthLayout title="Sign in" subtitle="">
       <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
         {setup.isError && (
           <FormAlert tone="info">

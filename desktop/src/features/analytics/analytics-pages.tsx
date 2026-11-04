@@ -1,18 +1,23 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { BarChart3, Download, FileSpreadsheet, FileText, Info, Lock } from "lucide-react";
+import { Download, Info, Lock } from "lucide-react";
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { PageHeader } from "@/components/layout/app-shell";
-import { EmptyState, ErrorState } from "@/components/states";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs } from "@/components/ui/form-controls";
-import { Avatar, Skeleton } from "@/components/ui/misc";
+import { Avatar } from "@/components/ui/misc";
 import { useAuth, useMe } from "@/features/auth/auth-context";
 import { axisProps, bucketLabel, CHART, ChartTooltip, LegendDot } from "@/features/dashboard/chart-kit";
-import { DateRangePicker, rangeForPreset, rangeLabel, type DateRange, type PresetKey } from "@/features/dashboard/date-range";
+import { DateRangePicker, rangeForPreset, type DateRange, type PresetKey } from "@/features/dashboard/date-range";
 import { api, errorMessage } from "@/lib/api";
 import { changeRatio, formatMoney, formatNumber, formatPercent, formatPlainDate } from "@/lib/format";
 import { cn, safeStorage } from "@/lib/utils";
@@ -52,13 +57,11 @@ function periodText(r: ReportRange) {
 function ReportPage<T extends { range: ReportRange }>({
   kind,
   title,
-  description,
   toDoc,
   children,
 }: {
   kind: "leads" | "sales" | "clients" | "finance" | "team";
   title: string;
-  description: string;
   toDoc: (data: T) => Omit<ReportDoc, "title" | "period">;
   children: (data: T) => React.ReactNode;
 }) {
@@ -87,7 +90,6 @@ function ReportPage<T extends { range: ReportRange }>({
     <div className="mx-auto max-w-[1400px]">
       <PageHeader
         title={title}
-        description={description}
         actions={
           <>
             <DateRangePicker
@@ -105,26 +107,24 @@ function ReportPage<T extends { range: ReportRange }>({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => void runExport("csv")}>
-                  <FileSpreadsheet /> CSV (Excel)
+                <DropdownMenuItem onSelect={() => void runExport("csv")}>CSV (Excel)
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => void runExport("pdf")}>
-                  <FileText /> PDF report
+                <DropdownMenuItem onSelect={() => void runExport("pdf")}>PDF report
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
         }
       />
-      {exportError && <p className="mb-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger-fg">{exportError}</p>}
+      {exportError && <p className="mb-4 rounded-md border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger-fg">{exportError}</p>}
       {query.isError ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : !query.data ? (
-        <ReportSkeleton />
+        <ListSkeleton />
       ) : (
         <div className={cn("flex flex-col gap-4 transition-opacity", query.isFetching && "opacity-70")}>
           <p className="-mt-3 text-xs text-subtle">
-            {rangeLabel(range)} · {periodText(query.data.range)} · grouped by {query.data.range.bucket}
+            {periodText(query.data.range)}
           </p>
           {children(query.data)}
         </div>
@@ -133,41 +133,26 @@ function ReportPage<T extends { range: ReportRange }>({
   );
 }
 
-function ReportSkeleton() {
+function Tile({ label, value, hint, change }: { label: string; value: React.ReactNode; hint?: React.ReactNode; change?: number | null }) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-28 rounded-card" />)}
-      </div>
-      <Skeleton className="h-80 rounded-card" />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-64 rounded-card" />
-        <Skeleton className="h-64 rounded-card" />
-      </div>
+    <div className="min-w-[180px] flex-1 bg-card px-4 py-3">
+      <p className="text-[13px] text-muted">{label}</p>
+      <p className="mt-1 flex items-baseline gap-2">
+        <span className="truncate text-xl font-semibold tabular-nums">{value}</span>
+        {change !== undefined && change !== null && change !== 0 && (
+          <span className={cn("text-xs tabular-nums", change > 0 ? "text-success-fg" : "text-danger-fg")}>
+            {change > 0 ? "+" : ""}
+            {Math.round(change * 100)}%
+          </span>
+        )}
+      </p>
+      {hint && <p className="mt-0.5 truncate text-xs text-subtle">{hint}</p>}
     </div>
   );
 }
 
-function Tile({ label, value, hint, change }: { label: string; value: React.ReactNode; hint?: React.ReactNode; change?: number | null }) {
-  return (
-    <Card className="p-5">
-      <p className="text-[13px] text-subtle">{label}</p>
-      <p className="mt-2 text-[28px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-fg">{value}</p>
-      <p className="mt-2 flex items-center gap-2 text-xs text-subtle">
-        {change !== undefined && change !== null && (
-          <span className={cn("rounded-md px-1.5 py-0.5 font-medium tabular-nums", change >= 0 ? "bg-success/15 text-success-fg" : "bg-danger/15 text-danger-fg")}>
-            {change >= 0 ? "+" : ""}
-            {Math.round(change * 100)}%
-          </span>
-        )}
-        {hint}
-      </p>
-    </Card>
-  );
-}
-
 function Tiles({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">{children}</div>;
+  return <div className="flex flex-wrap gap-px overflow-hidden rounded-card border border-line bg-line">{children}</div>;
 }
 
 /** Horizontal bars — readable for long category names. */
@@ -183,7 +168,7 @@ function BarList({ rows, empty = "No data for this period" }: { rows: { label: s
             <span className="shrink-0 tabular-nums text-fg">{r.display ?? formatNumber(r.value)}</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-raised">
-            <div className="h-full rounded-full bg-gradient-to-r from-accent to-magenta" style={{ width: `${(r.value / max) * 100}%` }} />
+            <div className="h-full rounded-full bg-accent" style={{ width: `${(r.value / max) * 100}%` }} />
           </div>
         </li>
       ))}
@@ -230,7 +215,7 @@ function TrendChart({
   height?: number;
 }) {
   const { series, rows } = pivot(points);
-  if (!rows.length) return <EmptyState icon={BarChart3} title="Nothing in this period" compact />;
+  if (!rows.length) return <EmptyState title="Nothing in this period" compact />;
   const fmt = (v: number) => (currency ? formatMoney(v, currency, { compact: true }) : formatNumber(v));
   return (
     <>
@@ -252,6 +237,7 @@ function TrendChart({
           />
           {series.map((s, i) => (
             <Bar
+              isAnimationActive={false}
               key={s}
               dataKey={s}
               name={s}
@@ -272,7 +258,7 @@ function CurrencyTrend({ points, unit }: { points: TrendPoint[]; unit: ReportRan
   const currencies = [...new Set(points.map((p) => p.series))];
   const [picked, setPicked] = React.useState<string | null>(null);
   const currency = picked && currencies.includes(picked) ? picked : currencies[0];
-  if (!currency) return <EmptyState icon={BarChart3} title="No revenue recorded in this period" compact />;
+  if (!currency) return <EmptyState title="No revenue recorded in this period" compact />;
   return (
     <>
       {currencies.length > 1 && (
@@ -289,7 +275,7 @@ function MoneyTable({ rows, labelHeader = "Item", empty = "Nothing recorded" }: 
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-line text-left text-xs uppercase tracking-[0.06em] text-subtle">
+          <tr className="border-b border-line text-left text-xs text-subtle">
             <th className="py-2 pr-3 font-medium">{labelHeader}</th>
             <th className="px-3 py-2 font-medium">Currency</th>
             <th className="px-3 py-2 text-right font-medium">Count</th>
@@ -311,17 +297,17 @@ function MoneyTable({ rows, labelHeader = "Item", empty = "Nothing recorded" }: 
   );
 }
 
-/** Per-currency amounts as one line ("PHP 120,000 · USD 4,000"). */
+/** Per-currency amounts as one line ("PHP 120,000, USD 4,000"). */
 function moneyLine(rows: { currency: string; amount: string }[]) {
   if (!rows.length) return "—";
-  return rows.map((r) => formatMoney(r.amount, r.currency, { compact: true })).join(" · ");
+  return rows.map((r) => formatMoney(r.amount, r.currency, { compact: true })).join(", ");
 }
 
 function FinanceLocked() {
   return (
     <Card className="flex items-center gap-3 p-4 text-sm text-muted">
       <Lock className="size-4 shrink-0 text-subtle" />
-      Revenue and deal values are hidden — they need the "View finances" permission.
+      Revenue and deal values need the "View finances" permission.
     </Card>
   );
 }
@@ -353,7 +339,6 @@ export function LeadAnalyticsPage() {
     <ReportPage<LeadReport>
       kind="leads"
       title="Lead Analytics"
-      description="Where leads come from, how many get contacted and how many convert."
       toDoc={(d) => ({
         sections: [
           {
@@ -393,7 +378,7 @@ export function LeadAnalyticsPage() {
             <Tile label="Never contacted" value={formatNumber(d.totals.never_contacted)} hint={`of ${formatNumber(d.totals.active)} active leads`} />
           </Tiles>
           <Card>
-            <CardHeader title="New leads over time" description="Split by market" />
+            <CardHeader title="New leads over time" />
             <CardBody>
               <TrendChart points={d.trend} unit={d.range.bucket} />
             </CardBody>
@@ -404,11 +389,11 @@ export function LeadAnalyticsPage() {
             <ListCard title="By industry" rows={d.by_industry} />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
-            <ListCard title="Pipeline stages" description="All leads you can see, right now" rows={d.by_stage} />
-            <ListCard title="Status" description="All leads you can see, right now" rows={d.by_status} />
+            <ListCard title="Pipeline stages" rows={d.by_stage} />
+            <ListCard title="Status" rows={d.by_status} />
           </div>
           <Card className="overflow-hidden">
-            <CardHeader title="By team member" description="New leads in the period and the interactions logged on them" className="pb-4" />
+            <CardHeader title="By team member" className="pb-4" />
             <SimpleTable
               headers={["Member", "New leads", "Contacted", "Converted", "Interactions"]}
               rows={d.by_owner.map((o) => [o.label, o.assigned, o.contacted, o.converted, o.interactions])}
@@ -427,7 +412,7 @@ function SimpleTable({ headers, rows, avatar }: { headers: string[]; rows: (stri
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-sm">
         <thead>
-          <tr className="border-y border-line text-left text-xs uppercase tracking-[0.06em] text-subtle">
+          <tr className="border-y border-line text-left text-xs text-subtle">
             {headers.map((h, i) => <th key={h} className={cn("py-3 font-medium", i === 0 ? "px-5" : "px-3 text-right")}>{h}</th>)}
           </tr>
         </thead>
@@ -463,7 +448,6 @@ export function SalesAnalyticsPage() {
     <ReportPage<SalesReport>
       kind="sales"
       title="Sales Analytics"
-      description="Deals won and lost, proposal outcomes and outreach activity."
       toDoc={(d) => ({
         note: "Amounts are listed per currency and never added across currencies.",
         sections: [
@@ -502,7 +486,7 @@ export function SalesAnalyticsPage() {
               <Tile
                 label="Proposal acceptance"
                 value={formatPercent(d.totals.proposals_accepted, responded)}
-                hint={`${formatNumber(d.totals.proposals_sent)} sent · ${d.totals.avg_days_to_decision !== null ? `${d.totals.avg_days_to_decision.toFixed(1)} days to decide` : "no decisions yet"}`}
+                hint={`${formatNumber(d.totals.proposals_sent)} sent, ${d.totals.avg_days_to_decision !== null ? `${d.totals.avg_days_to_decision.toFixed(1)} days to decide` : "no decisions yet"}`}
               />
               <Tile label="Outreach" value={formatNumber(d.totals.interactions)} hint={`${formatNumber(d.totals.meetings)} meetings`} />
             </Tiles>
@@ -510,7 +494,7 @@ export function SalesAnalyticsPage() {
               <>
                 <div className="grid gap-4 lg:grid-cols-3">
                   <Card className="lg:col-span-2">
-                    <CardHeader title="Won deal value" description="Per currency — switch currency with the tabs" />
+                    <CardHeader title="Won deal value" />
                     <CardBody>
                       <CurrencyTrend points={d.revenue_trend} unit={d.range.bucket} />
                     </CardBody>
@@ -523,7 +507,7 @@ export function SalesAnalyticsPage() {
                   </Card>
                 </div>
                 <Card>
-                  <CardHeader title="Pipeline value" description="Open deals plus estimated value of active leads without a deal — right now" />
+                  <CardHeader title="Pipeline value" description="Open deals plus estimated value of active leads" />
                   <CardBody>
                     <MoneyTable rows={d.pipeline_by_currency} empty="No open pipeline value" />
                   </CardBody>
@@ -552,7 +536,6 @@ export function ClientAnalyticsPage() {
     <ReportPage<ClientReport>
       kind="clients"
       title="Client Analytics"
-      description="Client growth, retention and the services clients use."
       toDoc={(d) => ({
         sections: [
           {
@@ -587,7 +570,7 @@ export function ClientAnalyticsPage() {
           </Tiles>
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
-              <CardHeader title="New clients" description="By client-since date" />
+              <CardHeader title="New clients" />
               <CardBody>
                 <TrendChart points={d.growth} unit={d.range.bucket} />
               </CardBody>
@@ -596,13 +579,13 @@ export function ClientAnalyticsPage() {
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
             <Card>
-              <CardHeader title="Services used" description="Clients with each service (active)" />
+              <CardHeader title="Services used" />
               <CardBody>
                 <BarList rows={d.services.map((s) => ({ label: s.label, value: s.clients, display: `${formatNumber(s.clients)} (${formatNumber(s.active)} active)` }))} />
               </CardBody>
             </Card>
             <ListCard title="By industry" rows={d.by_industry} />
-            <ListCard title="Per account manager" description="Current clients" rows={d.by_manager} />
+            <ListCard title="Per account manager" rows={d.by_manager} />
           </div>
         </>
       )}
@@ -620,7 +603,7 @@ export function FinanceReportsPage() {
     return (
       <div className="mx-auto max-w-[1400px]">
         <PageHeader title="Financial Reports" />
-        <EmptyState icon={Lock} title="You don't have access to financial reports" description='Ask an administrator for the "View finances" permission.' />
+        <EmptyState title="You don't have access to financial reports" description='Ask an administrator for the "View finances" permission.' />
       </div>
     );
   }
@@ -628,7 +611,6 @@ export function FinanceReportsPage() {
     <ReportPage<FinanceReport>
       kind="finance"
       title="Financial Reports"
-      description="Revenue from won deals, recurring services and contracts — per currency."
       toDoc={(d) => ({
         note: d.note,
         sections: [
@@ -660,39 +642,39 @@ export function FinanceReportsPage() {
               <Tile label="Awaiting decision" value={moneyLine(d.proposals_pending)} />
             </Tiles>
           ) : (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Tiles>
               {d.won.map((w) => (
                 <Tile
                   key={w.currency}
-                  label={`Won in period · ${w.currency}`}
+                  label={`Won in period (${w.currency})`}
                   value={formatMoney(w.amount, w.currency, { compact: true })}
                   change={changeRatio(Number(w.amount), Number(w.previous_amount))}
                   hint={`${formatNumber(w.deals)} deals`}
                 />
               ))}
-            </div>
+            </Tiles>
           )}
           <Card>
-            <CardHeader title="Won deal value by month" description="One currency at a time" />
+            <CardHeader title="Won deal value by month" />
             <CardBody>
               <CurrencyTrend points={d.revenue_trend} unit="month" />
             </CardBody>
           </Card>
           <div className="grid gap-4 lg:grid-cols-3">
             <Card>
-              <CardHeader title="Recurring per month" description="Active monthly, quarterly and yearly services, as a monthly amount" />
+              <CardHeader title="Recurring per month" description="Monthly equivalent of active services" />
               <CardBody>
                 <MoneyTable rows={d.recurring_monthly} empty="No recurring services" />
               </CardBody>
             </Card>
             <Card>
-              <CardHeader title="Active contracts" description="Signed or active, not yet ended" />
+              <CardHeader title="Active contracts" />
               <CardBody>
                 <MoneyTable rows={d.active_contracts} empty="No active contracts" />
               </CardBody>
             </Card>
             <Card>
-              <CardHeader title="Awaiting decision" description="Proposals ready or sent" />
+              <CardHeader title="Awaiting decision" />
               <CardBody>
                 <MoneyTable rows={d.proposals_pending} empty="No proposals waiting" />
               </CardBody>
@@ -700,13 +682,13 @@ export function FinanceReportsPage() {
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
-              <CardHeader title="Top clients" description="Won deals in the period" />
+              <CardHeader title="Top clients" />
               <CardBody>
                 <MoneyTable rows={d.top_clients} labelHeader="Company" empty="No deals won in this period" />
               </CardBody>
             </Card>
             <Card>
-              <CardHeader title="Recurring by service category" description="Monthly amount of active services" />
+              <CardHeader title="Recurring by service category" />
               <CardBody>
                 <MoneyTable rows={d.by_service_category} labelHeader="Category" empty="No active services" />
               </CardBody>
@@ -741,7 +723,7 @@ export function TeamPerformancePage() {
     return (
       <div className="mx-auto max-w-[1400px]">
         <PageHeader title="Team Performance" />
-        <EmptyState icon={Lock} title="You don't have access to team reports" description='Ask an administrator for the "View team" permission.' />
+        <EmptyState title="You don't have access to team reports" description='Ask an administrator for the "View team" permission.' />
       </div>
     );
   }
@@ -749,7 +731,6 @@ export function TeamPerformancePage() {
     <ReportPage<TeamReport>
       kind="team"
       title="Team Performance"
-      description="Completed work per person — tasks, sales activity, projects, content and maintenance."
       toDoc={(d) => ({
         sections: [
           {
@@ -781,7 +762,7 @@ export function TeamPerformancePage() {
               </CardBody>
             </Card>
             <Card className="overflow-hidden">
-              <CardHeader title="Per team member" description="Counts within the period, except “Overdue now”" className="pb-4" />
+              <CardHeader title="Per team member" className="pb-4" />
               <SimpleTable headers={["Member", ...TEAM_COLS.map(([, l]) => l)]} rows={d.members.map((m) => [m.full_name, ...TEAM_COLS.map(([k]) => m[k] as number)])} avatar />
             </Card>
           </>

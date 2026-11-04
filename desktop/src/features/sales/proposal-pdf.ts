@@ -36,7 +36,7 @@ export async function downloadProposalPdf(p: ProposalDetail, preparedBy: { name:
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...MUTED);
-  const meta = [`No. ${p.number}${p.current_version > 1 ? ` · v${p.current_version}` : ""}`, `Date: ${plainDate(p.sent_at ?? p.updated_at)}`];
+  const meta = [`No. ${p.number}${p.current_version > 1 ? `, v${p.current_version}` : ""}`, `Date: ${plainDate(p.sent_at ?? p.updated_at)}`];
   if (p.valid_until) meta.push(`Valid until: ${plainDate(p.valid_until)}`);
   meta.forEach((line, i) => doc.text(line, W - M, y - 8 + i * 13, { align: "right" }));
 
@@ -53,7 +53,7 @@ export async function downloadProposalPdf(p: ProposalDetail, preparedBy: { name:
     r.company_name,
     r.contact_name ? `Attn: ${r.contact_name}${r.contact_position ? `, ${r.contact_position}` : ""}` : null,
     [r.address, r.city, r.region, r.country].filter(Boolean).join(", ") || null,
-    [r.contact_email, r.contact_phone].filter(Boolean).join(" · ") || null,
+    [r.contact_email, r.contact_phone].filter(Boolean).join(", ") || null,
   ].filter(Boolean) as string[];
   doc.setFontSize(9);
   doc.setTextColor(...MUTED);
@@ -159,7 +159,7 @@ export async function downloadProposalPdf(p: ProposalDetail, preparedBy: { name:
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(...MUTED);
-    doc.text(`${p.number} · Page ${i} of ${pages}`, W / 2, doc.internal.pageSize.getHeight() - 24, { align: "center" });
+    doc.text(`${p.number}, Page ${i} of ${pages}`, W / 2, doc.internal.pageSize.getHeight() - 24, { align: "center" });
   }
 
   const safe = (r.company_name ?? p.title).replace(/[\\/:*?"<>|]+/g, " ").trim();

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, Eye, File as FileIcon, FileImage, FileText, FileVideo, Paperclip, Trash2, Upload } from "lucide-react";
+import { Download, Eye, File as FileIcon, FileImage, FileText, FileVideo, Trash2, Upload } from "lucide-react";
 import * as React from "react";
 
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/states";
@@ -99,17 +99,15 @@ export function FilesPanel({ target, canEdit, title = "Files" }: { target: Uploa
       ) : files.isError ? (
         <ErrorState error={files.error} onRetry={() => void files.refetch()} compact />
       ) : files.data.length === 0 && uploads.length === 0 ? (
-        <EmptyState icon={Paperclip} title="No files yet" description={canEdit ? "Drop files here or use Upload. Files are private to your team." : undefined} compact />
+        <EmptyState title="No files yet" description={canEdit ? "Drop files here or use Upload. Files are private to your team." : undefined} compact />
       ) : (
         <ul className="flex flex-col">
           {files.data.map((f) => {
-            const Icon = fileIcon(f.content_type);
             return (
-              <li key={f.id} className="group flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-raised/50">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-line bg-raised text-subtle"><Icon className="size-4" /></span>
+              <li key={f.id} className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-raised/50">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{f.original_name}</p>
-                  <p className="truncate text-xs text-subtle">{formatBytes(f.size_bytes)} · {f.uploaded_by_name ?? "—"} · {formatRelative(f.created_at)}</p>
+                  <p className="truncate text-xs text-subtle">{formatBytes(f.size_bytes)}, {f.uploaded_by_name ?? "—"}, {formatRelative(f.created_at)}</p>
                 </div>
                 <Button variant="ghost" size="icon-sm" aria-label={`Preview ${f.original_name}`} onClick={() => void open(f, false)}><Eye /></Button>
                 <Button variant="ghost" size="icon-sm" aria-label={`Download ${f.original_name}`} onClick={() => void open(f, true)}><Download /></Button>

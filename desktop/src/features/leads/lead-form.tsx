@@ -199,7 +199,7 @@ export function LeadFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title={lead ? `Edit ${lead.business_name}` : "Add a lead"}
-        description="Only the business name is required. Fill in what you know — the rest can be added during research."
+        description="Only the business name is required."
         className="max-h-[calc(100vh-4rem)] max-w-3xl overflow-y-auto"
       >
         <form
@@ -416,7 +416,7 @@ export function LeadFormDialog({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <fieldset className="grid grid-cols-2 gap-4">
-      <legend className="col-span-2 mb-3 text-xs font-medium uppercase tracking-[0.08em] text-subtle">{title}</legend>
+      <legend className="col-span-2 mb-3 text-xs font-medium text-subtle">{title}</legend>
       {children}
     </fieldset>
   );

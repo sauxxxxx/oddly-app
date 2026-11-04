@@ -94,7 +94,7 @@ export function PostDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title={postId ? (post.data?.title ?? "Post") : "New post"}
-        description={post.data ? `${post.data.client_name} · ${PLATFORM_LABELS[post.data.platform]}` : undefined}
+        description={post.data ? `${post.data.client_name}, ${PLATFORM_LABELS[post.data.platform]}` : undefined}
         className="max-h-[calc(100vh-4rem)] max-w-4xl overflow-y-auto"
       >
         {postId && post.isPending ? <ListSkeleton rows={5} /> : (
@@ -193,7 +193,7 @@ function ReviewPanel({ postId }: { postId: string }) {
     <section className="rounded-control border border-line p-4">
       <p className="mb-2 flex items-center justify-between text-sm font-medium">
         Review
-        <span className="rounded-full border px-2 py-0.5 text-[11px]" style={{ color: p.stage_color, borderColor: `${p.stage_color}55` }}>{p.stage_name}</span>
+        <span className="rounded-md border px-2 py-0.5 text-[11px]" style={{ color: p.stage_color, borderColor: `${p.stage_color}55` }}>{p.stage_name}</span>
       </p>
       {can("content.approve") && reviewable ? (
         <div className="flex flex-col gap-2">
@@ -212,7 +212,7 @@ function ReviewPanel({ postId }: { postId: string }) {
           {p.approvals.map((a) => (
             <li key={a.id} className="text-xs">
               <Badge tone={a.decision === "approved" ? "success" : "warning"}>{a.decision === "approved" ? "Approved" : "Changes requested"}</Badge>
-              <span className="ml-1.5 text-subtle">{a.reviewer_name} · {formatRelative(a.created_at)}</span>
+              <span className="ml-1.5 text-subtle">{a.reviewer_name}, {formatRelative(a.created_at)}</span>
               {a.feedback && <p className="mt-1 text-muted">{a.feedback}</p>}
             </li>
           ))}
@@ -265,7 +265,7 @@ function PostMedia({ postId, clientId }: { postId: string; clientId: string }) {
       {assets.data?.length ? (
         <div className="grid grid-cols-2 gap-2">
           {assets.data.map((a) => (
-            <div key={a.id} className={cn("aspect-square overflow-hidden rounded-lg border border-line bg-raised")}>
+            <div key={a.id} className={cn("aspect-square overflow-hidden rounded-md border border-line bg-raised")}>
               {a.preview_url && a.content_type.startsWith("image/") ? (
                 <img src={a.preview_url} alt={a.title ?? a.original_name} className="size-full object-cover" />
               ) : a.preview_url && a.content_type.startsWith("video/") ? (

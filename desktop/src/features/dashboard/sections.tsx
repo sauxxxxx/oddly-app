@@ -1,16 +1,4 @@
-import {
-  RefreshCw,
-  Activity,
-  CalendarClock,
-  CalendarDays,
-  CircleCheck,
-  FileText,
-  FolderKanban,
-  ImageIcon,
-  MapPin,
-  Sparkles,
-  Video,
-} from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import type * as React from "react";
 import { Link } from "react-router";
 
@@ -18,48 +6,37 @@ import { EmptyState } from "@/components/states";
 import { Badge, PriorityBadge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Avatar, Progress, Skeleton } from "@/components/ui/misc";
 import { useInsights, useRefreshInsights } from "@/features/ai/api";
 import { useMe } from "@/features/auth/auth-context";
-import { formatDate, formatMoney, formatPlainDate, formatRelative, formatTime, humanize } from "@/lib/format";
 import { errorMessage } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { formatDate, formatTime, humanize } from "@/lib/format";
 import type { DashboardSummary } from "@/types/api";
 
 type Props = { data: DashboardSummary };
 
 function ViewAll({ to }: { to: string }) {
   return (
-    <Button asChild variant="ghost" size="sm" className="-mr-2">
+    <Button asChild variant="ghost" size="sm" className="-mr-2 -mt-1">
       <Link to={to}>View all</Link>
     </Button>
   );
 }
 
-function Row({ children, className }: { children: React.ReactNode; className?: string }) {
+function Rows({ children }: { children: React.ReactNode }) {
+  return <ul className="flex flex-col divide-y divide-line">{children}</ul>;
+}
+
+function Row({ title, detail, end }: { title: React.ReactNode; detail: React.ReactNode; end?: React.ReactNode }) {
   return (
-    <li className={cn("flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-raised/50", className)}>
-      {children}
+    <li className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">{title}</p>
+        <p className="truncate text-xs text-subtle">{detail}</p>
+      </div>
+      {end}
     </li>
   );
 }
-
-function IconTile({ icon: Icon, tone = "neutral" }: { icon: React.ComponentType<{ className?: string }>; tone?: "neutral" | "accent" | "danger" }) {
-  return (
-    <span
-      className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-xl border",
-        tone === "accent" && "border-accent/25 bg-accent-soft text-accent",
-        tone === "danger" && "border-danger/25 bg-danger-soft text-danger",
-        tone === "neutral" && "border-line bg-raised text-subtle",
-      )}
-    >
-      <Icon className="size-4" />
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
 
 export function TodaysMeetings({ data }: Props) {
   const me = useMe();
@@ -67,31 +44,23 @@ export function TodaysMeetings({ data }: Props) {
   if (!meetings) return null;
   return (
     <Card>
-      <CardHeader title="Today's meetings" description={formatDate(new Date().toISOString(), me.timezone, { weekday: "long", month: "long", day: "numeric" })} action={<ViewAll to="/sales/meetings" />} />
+      <CardHeader title="Meetings today" action={<ViewAll to="/sales/meetings" />} />
       <CardBody>
         {meetings.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="No meetings today" description="Meetings you organize or join appear here." compact />
+          <EmptyState title="No meetings today." compact />
         ) : (
-          <ul className="-mx-2 flex flex-col">
+          <Rows>
             {meetings.map((m) => (
-              <Row key={m.id}>
-                <div className="w-16 shrink-0 text-right">
-                  <p className="text-sm font-medium tabular-nums">{formatTime(m.starts_at, me.timezone)}</p>
-                  {m.ends_at && <p className="text-xs text-subtle tabular-nums">{formatTime(m.ends_at, me.timezone)}</p>}
-                </div>
-                <span className="h-9 w-px shrink-0 bg-accent/50" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{m.title}</p>
-                  <p className="flex items-center gap-1.5 truncate text-xs text-subtle">
-                    {m.meeting_url ? <Video className="size-3" /> : m.location ? <MapPin className="size-3" /> : null}
-                    {m.meeting_url ? "Online" : (m.location ?? "No location")}
-                    {m.related_name && ` · ${m.related_name}`}
-                  </p>
-                </div>
-                {m.status !== "scheduled" && <Badge>{humanize(m.status)}</Badge>}
-              </Row>
+              <Row
+                key={m.id}
+                title={m.title}
+                detail={[formatTime(m.starts_at, me.timezone), m.meeting_url ? "Online" : m.location, m.related_name]
+                  .filter(Boolean)
+                  .join(", ")}
+                end={m.status !== "scheduled" && <Badge>{humanize(m.status)}</Badge>}
+              />
             ))}
-          </ul>
+          </Rows>
         )}
       </CardBody>
     </Card>
@@ -102,36 +71,31 @@ export function UpcomingFollowUps({ data }: Props) {
   const me = useMe();
   const items = data.upcoming_follow_ups;
   if (!items) return null;
-  const overdue = items.filter((f) => f.overdue).length;
   return (
     <Card>
-      <CardHeader
-        title="Follow-ups"
-        description={overdue > 0 ? `${overdue} overdue` : "Assigned to you"}
-        action={<ViewAll to="/sales/follow-ups" />}
-      />
+      <CardHeader title="Follow-ups" action={<ViewAll to="/sales/follow-ups" />} />
       <CardBody>
         {items.length === 0 ? (
-          <EmptyState icon={CalendarClock} title="No follow-ups due" description="Follow-ups assigned to you will line up here by due date." compact />
+          <EmptyState title="No follow-ups due." compact />
         ) : (
-          <ul className="-mx-2 flex flex-col">
+          <Rows>
             {items.map((f) => (
-              <Row key={f.id}>
-                <IconTile icon={CalendarClock} tone={f.overdue ? "danger" : "accent"} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{f.title}</p>
-                  <p className="truncate text-xs text-subtle">
-                    {f.related_name ?? "General"} ·{" "}
+              <Row
+                key={f.id}
+                title={f.title}
+                detail={
+                  <>
+                    {f.related_name ?? "General"},{" "}
                     <span className={f.overdue ? "text-danger-fg" : undefined}>
-                      {f.overdue ? "Overdue, " : ""}
+                      {f.overdue ? "overdue " : ""}
                       {formatDate(f.due_at, me.timezone)} {formatTime(f.due_at, me.timezone)}
                     </span>
-                  </p>
-                </div>
-                <PriorityBadge priority={f.priority} />
-              </Row>
+                  </>
+                }
+                end={<PriorityBadge priority={f.priority} />}
+              />
             ))}
-          </ul>
+          </Rows>
         )}
       </CardBody>
     </Card>
@@ -149,109 +113,28 @@ export function MyTasks({ data }: Props) {
   const me = useMe();
   return (
     <Card>
-      <CardHeader title="My tasks" description={`${data.my_tasks.length} open`} action={<ViewAll to="/projects/my-tasks" />} />
+      <CardHeader title="My tasks" action={<ViewAll to="/projects/my-tasks" />} />
       <CardBody>
         {data.my_tasks.length === 0 ? (
-          <EmptyState icon={CircleCheck} title="Nothing assigned to you" description="Tasks assigned to you across projects show up here." compact />
+          <EmptyState title="No open tasks." compact />
         ) : (
-          <ul className="-mx-2 flex flex-col">
+          <Rows>
             {data.my_tasks.map((t) => (
-              <Row key={t.id}>
-                <IconTile icon={CircleCheck} tone={t.overdue ? "danger" : "neutral"} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{t.title}</p>
-                  <p className="truncate text-xs text-subtle">
+              <Row
+                key={t.id}
+                title={t.title}
+                detail={
+                  <>
                     {t.project_name ?? "No project"}
                     {t.due_at && (
-                      <span className={t.overdue ? "text-danger-fg" : undefined}> · due {formatDate(t.due_at, me.timezone)}</span>
+                      <span className={t.overdue ? "text-danger-fg" : undefined}>, due {formatDate(t.due_at, me.timezone)}</span>
                     )}
-                  </p>
-                </div>
-                <Badge tone={TASK_TONE[t.status] ?? "neutral"}>{humanize(t.status)}</Badge>
-              </Row>
+                  </>
+                }
+                end={<Badge tone={TASK_TONE[t.status] ?? "neutral"}>{humanize(t.status)}</Badge>}
+              />
             ))}
-          </ul>
-        )}
-      </CardBody>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-
-export function ProjectProgress({ data }: Props) {
-  const projects = data.project_progress;
-  if (!projects) return null;
-  return (
-    <Card>
-      <CardHeader title="Project progress" description="Active projects by deadline" action={<ViewAll to="/projects" />} />
-      <CardBody>
-        {projects.length === 0 ? (
-          <EmptyState icon={FolderKanban} title="No active projects" description="Client projects and their task completion appear here." compact />
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {projects.map((p) => {
-              const pct = p.total_tasks ? (p.done_tasks / p.total_tasks) * 100 : 0;
-              return (
-                <li key={p.id}>
-                  <div className="mb-2 flex items-baseline justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{p.name}</p>
-                      <p className="truncate text-xs text-subtle">
-                        {p.client_name ?? "Internal"}
-                        {p.deadline && ` · due ${formatPlainDate(p.deadline)}`}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs tabular-nums text-muted">
-                      {p.done_tasks}/{p.total_tasks} · {Math.round(pct)}%
-                    </span>
-                  </div>
-                  <Progress value={pct} />
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </CardBody>
-    </Card>
-  );
-}
-
-const PROPOSAL_TONE: Record<string, BadgeTone> = {
-  draft: "neutral",
-  ready: "info",
-  sent: "accent",
-  accepted: "success",
-  rejected: "danger",
-  expired: "warning",
-};
-
-export function RecentProposals({ data }: Props) {
-  const proposals = data.recent_proposals;
-  if (!proposals) return null;
-  return (
-    <Card>
-      <CardHeader title="Recent proposals" action={<ViewAll to="/sales/proposals" />} />
-      <CardBody>
-        {proposals.length === 0 ? (
-          <EmptyState icon={FileText} title="No proposals yet" description="Proposals built in CRM & Sales are tracked here by status." compact />
-        ) : (
-          <ul className="-mx-2 flex flex-col">
-            {proposals.map((p) => (
-              <Row key={p.id}>
-                <IconTile icon={FileText} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{p.company_name}</p>
-                  <p className="truncate text-xs text-subtle">
-                    {p.number} · {formatMoney(p.total, p.currency)}
-                  </p>
-                </div>
-                <Badge tone={PROPOSAL_TONE[p.status] ?? "neutral"} dot>
-                  {p.status === "ready" ? "Ready to send" : humanize(p.status)}
-                </Badge>
-              </Row>
-            ))}
-          </ul>
+          </Rows>
         )}
       </CardBody>
     </Card>
@@ -264,111 +147,58 @@ export function PendingApprovals({ data }: Props) {
   if (!items) return null;
   return (
     <Card>
-      <CardHeader title="Pending approvals" description="Content awaiting review" action={<ViewAll to="/content/approvals" />} />
+      <CardHeader title="Pending approvals" action={<ViewAll to="/content/approvals" />} />
       <CardBody>
         {items.length === 0 ? (
-          <EmptyState icon={ImageIcon} title="Nothing waiting for review" description="Posts in internal review or client approval appear here." compact />
+          <EmptyState title="Nothing waiting for review." compact />
         ) : (
-          <ul className="-mx-2 flex flex-col">
+          <Rows>
             {items.map((a) => (
-              <Row key={a.id}>
-                <IconTile icon={ImageIcon} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.title}</p>
-                  <p className="truncate text-xs text-subtle">
-                    {a.client_name} · {humanize(a.platform)}
-                    {a.publish_at && ` · ${formatDate(a.publish_at, me.timezone)}`}
-                  </p>
-                </div>
-                <span
-                  className="shrink-0 rounded-full border px-2 py-0.5 text-[11.5px] font-medium"
-                  style={{ color: a.stage_color, borderColor: `${a.stage_color}40`, background: `${a.stage_color}1f` }}
-                >
-                  {a.stage_name}
-                </span>
-              </Row>
+              <Row
+                key={a.id}
+                title={a.title}
+                detail={[a.client_name, humanize(a.platform), a.publish_at && formatDate(a.publish_at, me.timezone)]
+                  .filter(Boolean)
+                  .join(", ")}
+                end={<span className="shrink-0 text-[13px] font-medium" style={{ color: a.stage_color }}>{a.stage_name}</span>}
+              />
             ))}
-          </ul>
+          </Rows>
         )}
       </CardBody>
     </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-
-export function RecentActivity({ data }: Props) {
-  return (
-    <Card>
-      <CardHeader title="Recent activity" description="Latest changes across the workspace" />
-      <CardBody>
-        {data.recent_activities.length === 0 ? (
-          <EmptyState icon={Activity} title="No activity yet" description="Adding leads, logging outreach and updating clients builds this timeline." compact />
-        ) : (
-          <ol className="relative flex flex-col gap-4 before:absolute before:bottom-2 before:left-[17px] before:top-2 before:w-px before:bg-line">
-            {data.recent_activities.map((a) => (
-              <li key={a.id} className="relative flex items-start gap-3">
-                <Avatar name={a.actor_name ?? "System"} className="size-9 ring-4" />
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-sm leading-snug text-fg">{a.summary}</p>
-                  <p className="mt-0.5 text-xs text-subtle">{formatRelative(a.created_at)}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </CardBody>
-    </Card>
-  );
-}
-
+/** Only shown once AI is set up; there's nothing useful to say before that. */
 export function AiInsights({ data }: Props) {
   const { configured } = data.insights;
   const insights = useInsights(configured);
   const refresh = useRefreshInsights();
+  if (!configured) return null;
   const busy = insights.isFetching || refresh.isPending;
   const error = refresh.error ?? insights.error;
   return (
-    <Card className="overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-accent/15 blur-3xl" />
+    <Card>
       <CardHeader
-        title={
-          <span className="flex items-center gap-2">
-            <Sparkles className="size-4 text-accent" /> AI insights
-          </span>
-        }
-        description="Suggestions only — always check before acting"
+        title="AI insights"
+        description="Suggestions only. Check before acting."
         action={
-          configured && (
-            <Button variant="ghost" size="sm" aria-label="Refresh insights" disabled={busy} onClick={() => refresh.mutate()}>
-              <RefreshCw className={busy ? "animate-spin" : undefined} />
-            </Button>
-          )
+          <Button variant="ghost" size="sm" aria-label="Refresh insights" disabled={busy} onClick={() => refresh.mutate()}>
+            <RefreshCw className={busy ? "animate-spin" : undefined} />
+          </Button>
         }
       />
       <CardBody>
-        {!configured ? (
-          <EmptyState
-            icon={Sparkles}
-            title="AI insights aren't switched on"
-            description="An administrator needs to add an OpenAI key on the server, and your role needs the AI assistant permission. Keys are never stored in the app."
-            compact
-          />
-        ) : error && !insights.data ? (
+        {error && !insights.data ? (
           <p className="text-sm text-danger-fg">{errorMessage(error)}</p>
         ) : !insights.data ? (
-          <div className="flex flex-col gap-2">
-            {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
-          </div>
+          <p className="text-sm text-subtle">Loading…</p>
         ) : insights.data.items.length === 0 ? (
-          <EmptyState icon={Sparkles} title="No insights yet" description="Insights are generated from your pipeline and client activity." compact />
+          <EmptyState title="No insights yet." compact />
         ) : (
-          <ul className="flex flex-col gap-2">
-            {insights.data.items.map((text) => (
-              <li key={text} className="rounded-xl border border-line bg-raised/50 p-3 text-sm text-muted">
-                {text}
-              </li>
-            ))}
+          <ul className="flex flex-col gap-2 text-sm text-muted">
+            {insights.data.items.map((text) => <li key={text}>{text}</li>)}
           </ul>
         )}
       </CardBody>

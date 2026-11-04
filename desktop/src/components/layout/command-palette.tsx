@@ -15,10 +15,9 @@ interface Entry {
   label: string;
   group: string;
   path: string;
-  icon: React.ComponentType<{ className?: string }>;
 }
 
-/** Ctrl/⌘+K: jump to any page you have access to. Record search arrives with Phase 2. */
+/** Ctrl/⌘+K: jump to any page you have access to. */
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { can } = useAuth();
   const navigate = useNavigate();
@@ -30,8 +29,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     () =>
       ALL_MODULES.filter((m) => can(m.permission)).flatMap((m) => {
         const children = (m.children ?? []).filter((c) => can(c.permission));
-        if (children.length === 0) return [{ label: m.label, group: "Go to", path: m.path, icon: m.icon }];
-        return children.map((c) => ({ label: c.label, group: m.label, path: c.path, icon: m.icon }));
+        if (children.length === 0) return [{ label: m.label, group: "Go to", path: m.path }];
+        return children.map((c) => ({ label: c.label, group: m.label, path: c.path }));
       }),
     [can],
   );
@@ -74,9 +73,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 animate-fade-in bg-black/55" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/55" />
         <DialogPrimitive.Content
-          className="fixed left-1/2 top-[14vh] z-50 w-[calc(100vw-2rem)] max-w-[560px] -translate-x-1/2 animate-pop-in overflow-hidden rounded-card border border-line bg-overlay shadow-pop focus:outline-none"
+          className="fixed left-1/2 top-[14vh] z-50 w-[calc(100vw-2rem)] max-w-[560px] -translate-x-1/2 overflow-hidden rounded-card border border-line bg-overlay shadow-pop focus:outline-none"
           onKeyDown={onKeyDown}
         >
           <DialogPrimitive.Title className="sr-only">Search ODDLY</DialogPrimitive.Title>
@@ -102,7 +101,6 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <li className="px-3 py-8 text-center text-sm text-subtle">No pages match “{query}”.</li>
             )}
             {results.map((entry, i) => {
-              const Icon = entry.icon;
               return (
                 <li
                   key={entry.path}
@@ -113,11 +111,10 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   onMouseMove={() => setIndex(i)}
                   onClick={() => go(entry)}
                   className={cn(
-                    "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm",
+                    "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm",
                     i === index ? "bg-raised text-fg" : "text-muted",
                   )}
                 >
-                  <Icon className={cn("size-4", i === index ? "text-accent" : "text-subtle")} />
                   <span className="flex-1">{entry.label}</span>
                   <span className="text-xs text-subtle">{entry.group}</span>
                   {i === index && <CornerDownLeft className="size-3.5 text-subtle" />}

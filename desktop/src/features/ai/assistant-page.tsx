@@ -1,4 +1,4 @@
-import { Bot, MessageSquarePlus, Pencil, Send, Sparkles, Trash2, Wrench } from "lucide-react";
+import { MessageSquarePlus, Pencil, Send, Trash2, Wrench } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Textarea } from "@/components/ui/form-controls";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/misc";
 import { useAuth } from "@/features/auth/auth-context";
 import { errorMessage } from "@/lib/api";
 import { formatRelative, humanize } from "@/lib/format";
@@ -38,12 +37,11 @@ const SUGGESTIONS = [
 export function AiUnavailable({ configured }: { configured: boolean }) {
   return (
     <EmptyState
-      icon={Sparkles}
       title={configured ? "Your role doesn't include the AI assistant" : "The AI assistant isn't set up yet"}
       description={
         configured
           ? "Ask an administrator to add the “Use AI assistant” permission to your role."
-          : "An administrator needs to add an OpenAI API key (OPENAI_API_KEY) to the server's settings. The key stays on the server — it's never stored in the app."
+          : "An administrator needs to add an OpenAI key to the server."
       }
     />
   );
@@ -84,17 +82,14 @@ function MessageBubble({ m }: { m: AiMessage }) {
   if (m.role === "user") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-accent/90 px-4 py-2.5 text-sm text-white">{m.content}</div>
+        <div className="max-w-[80%] whitespace-pre-wrap rounded-md bg-raised px-4 py-2.5 text-sm text-fg">{m.content}</div>
       </div>
     );
   }
   return (
     <div className="flex gap-3">
-      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-magenta text-white">
-        <Bot className="size-4" />
-      </span>
       <div className="min-w-0 flex-1">
-        <div className="rounded-2xl rounded-tl-md border border-line bg-card px-4 py-3 text-sm leading-relaxed text-muted">
+        <div className="rounded-md border border-line bg-card px-4 py-3 text-sm leading-relaxed text-muted">
           <RichText text={m.content} />
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-subtle">
@@ -145,16 +140,13 @@ function Chat({ id }: { id: string }) {
         )}
         {c.messages.length === 0 && !send.isPending ? (
           <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-10 text-center">
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-magenta text-white">
-              <Sparkles className="size-5" />
-            </span>
             <div>
               <p className="text-lg font-medium">What can I help with?</p>
               <p className="mt-1 text-sm text-muted">I can look up leads, sales, clients, tasks and reports you're allowed to see, and write drafts. I can't send, change or publish anything.</p>
             </div>
             <div className="grid w-full gap-2 sm:grid-cols-2">
               {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => submit(s)} className="rounded-xl border border-line bg-raised/50 p-3 text-left text-sm text-muted transition-colors hover:border-line-strong hover:text-fg">
+                <button key={s} onClick={() => submit(s)} className="rounded-md border border-line bg-raised/50 p-3 text-left text-sm text-muted transition-colors hover:border-line-strong hover:text-fg">
                   {s}
                 </button>
               ))}
@@ -166,10 +158,10 @@ function Chat({ id }: { id: string }) {
             {send.isPending && (
               <>
                 <div className="flex justify-end">
-                  <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-accent/60 px-4 py-2.5 text-sm text-white">{send.variables}</div>
+                  <div className="max-w-[80%] whitespace-pre-wrap rounded-md bg-raised px-4 py-2.5 text-sm text-fg">{send.variables}</div>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-subtle">
-                  <Skeleton className="size-8 rounded-full" /> Looking things up…
+                  Looking things up…
                 </div>
               </>
             )}
@@ -205,7 +197,7 @@ function Chat({ id }: { id: string }) {
             <Send />
           </Button>
         </div>
-        <p className="mx-auto mt-2 max-w-3xl text-[11px] text-subtle">AI answers can be wrong — check important facts in the records. Enter to send, Shift+Enter for a new line.</p>
+        <p className="mx-auto mt-2 max-w-3xl text-[11px] text-subtle">AI answers can be wrong. Check important facts. Enter to send, Shift+Enter for a new line.</p>
       </form>
     </div>
   );
@@ -233,15 +225,14 @@ export function AssistantPage() {
     <div className="mx-auto max-w-[1400px]">
       <PageHeader
         title="AI Assistant"
-        description={ready ? `Answers from the data you can see · model ${status.data.model}` : undefined}
-        actions={ready && <Button onClick={startNew} disabled={create.isPending}><MessageSquarePlus /> New chat</Button>}
+                actions={ready && <Button onClick={startNew} disabled={create.isPending}><MessageSquarePlus /> New chat</Button>}
       />
       {!ready ? (
         <AiUnavailable configured={status.data.configured} />
       ) : (
         <Card className="grid h-[calc(100vh-220px)] min-h-[520px] grid-cols-1 overflow-hidden md:grid-cols-[260px_minmax(0,1fr)]">
           <aside className="hidden min-h-0 flex-col border-r border-line md:flex">
-            <p className="px-4 pb-2 pt-4 text-xs font-medium uppercase tracking-[0.06em] text-subtle">Conversations</p>
+            <p className="px-4 pb-2 pt-4 text-xs font-medium text-subtle">Conversations</p>
             <ul className="flex-1 overflow-y-auto px-2 pb-2">
               {conversations.isPending ? (
                 <li className="p-2"><ListSkeleton rows={3} /></li>
@@ -264,11 +255,11 @@ export function AssistantPage() {
                     ) : (
                       <Link
                         to={`/ai/chat/${c.id}`}
-                        className={cn("block rounded-lg px-2.5 py-2 pr-14 text-sm transition-colors hover:bg-raised", id === c.id ? "bg-raised text-fg" : "text-muted")}
+                        className={cn("block rounded-md px-2.5 py-2 pr-14 text-sm transition-colors hover:bg-raised", id === c.id ? "bg-raised text-fg" : "text-muted")}
                       >
                         <span className="block truncate">{c.title ?? "New conversation"}</span>
                         <span className="block truncate text-xs text-subtle">
-                          {c.context_label ? `${c.context_label} · ` : ""}
+                          {c.context_label ? `${c.context_label}, ` : ""}
                           {formatRelative(c.updated_at)}
                         </span>
                       </Link>
@@ -294,9 +285,7 @@ export function AssistantPage() {
             ) : (
               <div className="flex h-full items-center justify-center p-6">
                 <EmptyState
-                  icon={Bot}
                   title="Start a conversation"
-                  description="Ask about your leads, pipeline, clients, tasks or reports. The assistant only sees what you're allowed to see."
                   action={<Button onClick={startNew} disabled={create.isPending}><MessageSquarePlus /> New chat</Button>}
                 />
               </div>
@@ -331,7 +320,7 @@ export function DraftWriterPage() {
   const ready = !!status.data?.configured && can("ai.use");
   return (
     <div className="mx-auto max-w-[1400px]">
-      <PageHeader title="Draft Writer" description="Outreach, follow-ups, proposal text, captions and summaries — drafts for you to review, edit and copy." />
+      <PageHeader title="Draft Writer" />
       {status.isPending ? (
         <ListSkeleton rows={4} />
       ) : status.isError ? (

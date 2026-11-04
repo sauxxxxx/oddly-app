@@ -65,7 +65,7 @@ export function MonthCalendar<T>({
       </div>
       <div className="grid grid-cols-7 overflow-hidden rounded-card border border-line">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="border-b border-line bg-card px-2 py-2 text-xs font-medium uppercase tracking-[0.06em] text-subtle">{d}</div>
+          <div key={d} className="border-b border-line bg-card px-2 py-2 text-xs font-medium text-subtle">{d}</div>
         ))}
         {cells.map((c, i) => {
           const list = items.get(c.key) ?? [];

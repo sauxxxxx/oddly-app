@@ -1,4 +1,4 @@
-import { ArrowLeft, Archive, ListChecks, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Archive, MoreHorizontal, Plus } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox, Textarea } from "@/components/ui/form-controls";
 import { Field, Input, Select } from "@/components/ui/input";
 import { Avatar, Progress } from "@/components/ui/misc";
@@ -36,7 +41,6 @@ export function LeadListsPage() {
     <>
       <PageHeader
         title="Lead lists"
-        description="Campaigns like “Barili Restaurants” or “US Real Estate Agencies”, each with its own team and progress."
         actions={can("leads.create") && <Button onClick={() => setEditing("new")}><Plus /> New list</Button>}
       />
       {lists.isPending ? (
@@ -46,9 +50,7 @@ export function LeadListsPage() {
       ) : lists.data.length === 0 ? (
         <Card>
           <EmptyState
-            icon={ListChecks}
             title="No lead lists yet"
-            description="Group leads into campaigns to split work across the team and track progress."
             action={can("leads.create") && <Button size="sm" onClick={() => setEditing("new")}><Plus /> New list</Button>}
           />
         </Card>
@@ -59,7 +61,7 @@ export function LeadListsPage() {
           </div>
           {archived.length > 0 && (
             <div>
-              <p className="mb-3 text-xs font-medium uppercase tracking-[0.08em] text-subtle">Archived</p>
+              <p className="mb-3 text-xs font-medium text-subtle">Archived</p>
               <div className="grid grid-cols-1 gap-4 opacity-70 lg:grid-cols-2 2xl:grid-cols-3">
                 {archived.map((l) => <ListCard key={l.id} list={l} onEdit={() => setEditing(l)} />)}
               </div>
@@ -96,7 +98,7 @@ function ListCard({ list: l, onEdit }: { list: LeadList; onEdit: () => void }) {
               <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${l.name}`}><MoreHorizontal /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onSelect={onEdit}><Pencil /> Edit</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onEdit}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() =>
                   save.mutate({
@@ -107,7 +109,7 @@ function ListCard({ list: l, onEdit }: { list: LeadList; onEdit: () => void }) {
               >
                 <Archive /> {l.archived_at ? "Unarchive" : "Archive"}
               </DropdownMenuItem>
-              {can("leads.delete") && <DropdownMenuItem destructive onSelect={() => setConfirm(true)}><Trash2 /> Delete list</DropdownMenuItem>}
+              {can("leads.delete") && <DropdownMenuItem destructive onSelect={() => setConfirm(true)}>Delete list</DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -220,7 +222,7 @@ function ListDialog({ list, open, onOpenChange }: { list?: LeadList; open: boole
               {lookups.data?.members.map((m) => {
                 const on = form.assignee_ids.includes(m.id);
                 return (
-                  <label key={m.id} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-raised">
+                  <label key={m.id} className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-raised">
                     <Checkbox
                       checked={on}
                       label={m.name}
@@ -255,7 +257,7 @@ export function LeadListDetailPage() {
       </Button>
       <PageHeader
         title={<span className="flex items-center gap-3"><span className="size-3.5 rounded-full" style={{ background: l.color }} />{l.name}</span>}
-        description={`${l.total} leads · ${l.contacted} contacted · ${l.interested} interested · ${l.won} won${l.assignees.length ? ` · ${l.assignees.map((a) => a.name).join(", ")}` : ""}`}
+        description={`${l.total} leads, ${l.contacted} contacted, ${l.interested} interested, ${l.won} won${l.assignees.length ? `, ${l.assignees.map((a) => a.name).join(", ")}` : ""}`}
       />
       <LeadsPage listId={l.id} embedded />
     </>

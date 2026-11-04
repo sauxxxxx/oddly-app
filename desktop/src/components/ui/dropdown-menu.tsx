@@ -16,7 +16,7 @@ export function DropdownMenuContent({
       <Menu.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-48 animate-pop-in rounded-xl border border-line bg-overlay p-1.5 shadow-pop",
+          "z-50 min-w-48 rounded-md border border-line bg-overlay p-1.5 shadow-pop",
           className,
         )}
         {...props}
@@ -33,7 +33,7 @@ export function DropdownMenuItem({
   return (
     <Menu.Item
       className={cn(
-        "flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg outline-none transition-colors data-[highlighted]:bg-raised data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted",
+        "flex cursor-pointer select-none items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-fg outline-none transition-colors data-[highlighted]:bg-raised data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted",
         destructive && "text-danger-fg [&_svg]:text-danger-fg",
         className,
       )}

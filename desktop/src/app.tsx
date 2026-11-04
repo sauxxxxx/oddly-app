@@ -15,7 +15,7 @@ import { RequireAuth } from "@/features/auth/require-auth";
 import { SetupPage } from "@/features/auth/setup-page";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { registerClientOpsExtensions } from "@/features/ops/client-extensions";
-import { ModuleRoadmapPage } from "@/features/roadmap/module-roadmap-page";
+import { NotFoundPage } from "@/components/not-found-page";
 import { registerLeadSalesExtensions } from "@/features/sales/lead-extensions";
 import { ApiError } from "@/lib/api";
 import { missingEnv } from "@/lib/env";
@@ -165,7 +165,7 @@ const router = createHashRouter([
               { path: "settings/profile", element: <ProfilePage /> },
               { path: "settings/team", element: <TeamPage /> },
               { path: "settings/roles", element: <RolesPage /> },
-              { path: "*", element: <ModuleRoadmapPage /> },
+              { path: "*", element: <NotFoundPage /> },
             ],
           },
         ],

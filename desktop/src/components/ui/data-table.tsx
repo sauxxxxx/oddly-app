@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "./button";
 import { Checkbox } from "./form-controls";
-import { Skeleton } from "./misc";
 
 export interface Column<T> {
   key: string;
@@ -77,14 +76,14 @@ export function DataTable<T extends { id: string }>({
                 <th
                   key={c.key}
                   className={cn(
-                    "sticky top-0 whitespace-nowrap border-b border-line bg-card px-4 py-3 text-xs font-medium uppercase tracking-[0.06em] text-subtle",
+                    "sticky top-0 whitespace-nowrap border-b border-line bg-card px-4 py-3 text-xs font-medium text-subtle",
                     c.headerClassName,
                   )}
                   aria-sort={active ? (sort?.dir === "asc" ? "ascending" : "descending") : undefined}
                 >
                   {c.sortKey && onSort ? (
                     <button
-                      className={cn("inline-flex items-center gap-1 uppercase tracking-[0.06em] hover:text-fg", active && "text-fg")}
+                      className={cn("inline-flex items-center gap-1 hover:text-fg", active && "text-fg")}
                       onClick={() =>
                         onSort({ sort: c.sortKey, dir: active && sort?.dir === "desc" ? "asc" : "desc" })
                       }
@@ -102,16 +101,13 @@ export function DataTable<T extends { id: string }>({
         </thead>
         <tbody>
           {loading && rows.length === 0
-            ? Array.from({ length: 8 }, (_, i) => (
-                <tr key={i}>
-                  {selectable && <td className="border-b border-line/60 py-4 pl-5" />}
-                  {columns.map((c) => (
-                    <td key={c.key} className="border-b border-line/60 px-4 py-4">
-                      <Skeleton className="h-3.5 w-3/4" />
-                    </td>
-                  ))}
+            ? (
+                <tr>
+                  <td colSpan={columns.length + (selectable ? 1 : 0)} className="px-5 py-4 text-sm text-subtle">
+                    Loading…
+                  </td>
                 </tr>
-              ))
+              )
             : rows.map((row) => (
                 <tr
                   key={row.id}

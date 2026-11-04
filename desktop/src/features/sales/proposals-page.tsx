@@ -1,4 +1,4 @@
-import { FilePlus2, FileText, LayoutTemplate, Search } from "lucide-react";
+import { FilePlus2, LayoutTemplate, Search } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
 
@@ -64,7 +64,7 @@ export function ProposalsPage() {
       cell: (p) => (
         <div className="min-w-0 max-w-[340px]">
           <p className="truncate font-medium">{p.title}</p>
-          <p className="truncate text-xs text-subtle">{templates ? "Reusable template" : `${p.number} · ${p.company_name ?? ""}`}</p>
+          <p className="truncate text-xs text-subtle">{templates ? "Reusable template" : `${p.number}, ${p.company_name ?? ""}`}</p>
         </div>
       ),
     },
@@ -83,7 +83,6 @@ export function ProposalsPage() {
     <>
       <PageHeader
         title="Proposals"
-        description="Build priced proposals, export PDFs, and track them from draft to accepted."
         actions={
           can("proposals.manage") && (
             <>
@@ -117,9 +116,7 @@ export function ProposalsPage() {
           <ErrorState error={data.error} onRetry={() => void data.refetch()} />
         ) : data.data?.total === 0 ? (
           <EmptyState
-            icon={templates ? LayoutTemplate : FileText}
             title={templates ? "No templates yet" : "No proposals here"}
-            description={templates ? "Save a finished proposal as a template, or create one from scratch." : "Start one from a lead, or with “New proposal”."}
           />
         ) : (
           <>

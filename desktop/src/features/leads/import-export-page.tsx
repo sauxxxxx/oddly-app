@@ -1,15 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CircleAlert,
-  CircleCheck,
-  Download,
-  FileSpreadsheet,
-  History,
-  RefreshCw,
-  Upload,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleAlert, Download, FileSpreadsheet, RefreshCw, Upload } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 
@@ -54,7 +44,6 @@ export function ImportExportPage() {
     <>
       <PageHeader
         title="Import / Export"
-        description="Bring in your lead spreadsheets (XLSX or CSV), or take your leads out to Excel."
       />
       <Tabs
         value={tab}
@@ -207,7 +196,7 @@ function ImportWizard() {
         <Card>
           <CardHeader
             title="Match your columns"
-            description={`${file?.name} · ${sheet.rows.length.toLocaleString()} rows · ${mappedCount} of ${sheet.headers.length} columns matched`}
+            description={`${file?.name}, ${sheet.rows.length.toLocaleString()} rows, ${mappedCount} of ${sheet.headers.length} columns matched`}
             action={<Button variant="ghost" size="sm" onClick={restart}><ArrowLeft /> Other file</Button>}
           />
           <CardBody>
@@ -231,7 +220,7 @@ function ImportWizard() {
                     }
                     className={cn("h-9 w-52", mapping[f.field] !== undefined && "border-accent/40")}
                   >
-                    <option value="">— Don't import —</option>
+                    <option value="">Don't import</option>
                     {sheet.headers.map((h, i) => (
                       <option key={i} value={i}>
                         {h}
@@ -242,7 +231,7 @@ function ImportWizard() {
               ))}
             </div>
             <div className="mt-6">
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-subtle">First rows as ODDLY will read them</p>
+              <p className="mb-2 text-xs font-medium text-subtle">First rows as ODDLY will read them</p>
               <SamplePreview rows={rows.slice(0, 5)} />
             </div>
           </CardBody>
@@ -315,12 +304,12 @@ function ImportWizard() {
               <Stat label="Can't import" value={failed.length} tone="danger" />
             </div>
             {issues.length === 0 ? (
-              <EmptyState icon={CircleCheck} title="Every row looks good" description="No errors and no duplicates were found." compact />
+              <EmptyState title="Every row looks good" compact />
             ) : (
               <div className="max-h-[420px] overflow-y-auto rounded-control border border-line">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-line text-left text-xs uppercase tracking-[0.06em] text-subtle">
+                    <tr className="border-b border-line text-left text-xs text-subtle">
                       <th className="px-3 py-2 font-medium">Row</th>
                       <th className="px-3 py-2 font-medium">Business</th>
                       <th className="px-3 py-2 font-medium">What we found</th>
@@ -405,7 +394,7 @@ function ImportWizard() {
         {step === "importing" && (
           <div className="mb-5">
             <Progress value={progress} className="h-2" />
-            <p className="mt-2 text-xs text-subtle">{results.length.toLocaleString()} of {rows.length.toLocaleString()} rows · keep this window open</p>
+            <p className="mt-2 text-xs text-subtle">{results.length.toLocaleString()} of {rows.length.toLocaleString()} rows, keep this window open</p>
           </div>
         )}
         {error && <div className="mb-4"><FormAlert>{error}</FormAlert></div>}
@@ -469,12 +458,9 @@ function DropZone({ onFile, error }: { onFile: (f: File) => void; error: string 
           over ? "border-accent bg-accent-soft/40" : "border-line hover:border-line-strong",
         )}
       >
-        <span className="flex size-12 items-center justify-center rounded-2xl border border-accent/25 bg-accent-soft text-accent">
-          <FileSpreadsheet className="size-6" />
-        </span>
         <div>
           <p className="font-medium">Drop a spreadsheet here, or click to choose</p>
-          <p className="mt-1 text-sm text-subtle">Excel (.xlsx) or CSV · first sheet · up to 20,000 rows</p>
+          <p className="mt-1 text-sm text-subtle">Excel (.xlsx) or CSV, first sheet, up to 20,000 rows</p>
         </div>
       </div>
       <input
@@ -578,7 +564,7 @@ function ExportCard() {
 
   return (
     <Card className="max-w-2xl">
-      <CardHeader title="Export leads" description="Columns match the import format, so an exported file can be edited and imported back." />
+      <CardHeader title="Export leads" />
       <CardBody className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Market" htmlFor="ex-market">
@@ -623,13 +609,13 @@ function ImportHistory() {
   if (history.isPending) return <Card className="p-6"><ListSkeleton rows={4} /></Card>;
   if (history.isError) return <Card><ErrorState error={history.error} onRetry={() => void history.refetch()} /></Card>;
   if (history.data.length === 0) {
-    return <Card><EmptyState icon={History} title="No imports yet" description="Each spreadsheet import is recorded here with its results." /></Card>;
+    return <Card><EmptyState title="No imports yet" /></Card>;
   }
   return (
     <Card className="overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-line text-left text-xs uppercase tracking-[0.06em] text-subtle">
+          <tr className="border-b border-line text-left text-xs text-subtle">
             <th className="px-5 py-3 font-medium">File</th>
             <th className="px-4 py-3 font-medium">By</th>
             <th className="px-4 py-3 font-medium">When</th>

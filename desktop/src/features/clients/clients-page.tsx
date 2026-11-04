@@ -1,4 +1,4 @@
-import { Building2, Globe, History, Plus, Search, UserRound } from "lucide-react";
+import { Globe, Plus, Search, UserRound } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -38,7 +38,7 @@ export function ClientStatusBadge({ status }: { status: ClientStatus }) {
 
 export function monthlyLabel(values: Record<string, string>) {
   const entries = Object.entries(values).filter(([, v]) => Number(v) > 0);
-  return entries.length ? entries.map(([c, v]) => `${formatMoney(v, c, { compact: Number(v) >= 100_000 })}/mo`).join(" · ") : "—";
+  return entries.length ? entries.map(([c, v]) => `${formatMoney(v, c, { compact: Number(v) >= 100_000 })}/mo`).join(", ") : "—";
 }
 
 function useDebounced(value: string) {
@@ -73,7 +73,7 @@ export function ClientsPage() {
           <p className="truncate font-medium">{c.name}</p>
           <p className="flex items-center gap-1.5 truncate text-xs text-subtle">
             {c.market === "international" && <Globe className="size-3" />}
-            {[c.industry, c.city, c.market === "international" ? c.country : null].filter(Boolean).join(" · ") || "—"}
+            {[c.industry, c.city, c.market === "international" ? c.country : null].filter(Boolean).join(", ") || "—"}
           </p>
         </div>
       ),
@@ -91,7 +91,6 @@ export function ClientsPage() {
     <>
       <PageHeader
         title="Clients"
-        description="Everyone the agency is working for. Won leads appear here automatically."
         actions={can("clients.manage") && <Button onClick={() => setAdding(true)}><Plus /> Add client</Button>}
       />
       <Card className="overflow-hidden">
@@ -115,9 +114,7 @@ export function ClientsPage() {
           <ErrorState error={clients.error} onRetry={() => void clients.refetch()} />
         ) : clients.data?.total === 0 ? (
           <EmptyState
-            icon={Building2}
             title={debounced || status !== "current" || manager ? "No clients match" : "No clients yet"}
-            description="Convert a won lead from its page or the pipeline, or add an existing client directly."
           />
         ) : (
           <>
@@ -138,7 +135,7 @@ export function ClientProfilesPage() {
   const clients = useClients({ status: "all", search: debounced || undefined, per_page: 200 });
   return (
     <>
-      <PageHeader title="Client profiles" description="Every client workspace — business details, contacts, services, projects and files." />
+      <PageHeader title="Client profiles" />
       <div className="relative mb-4 max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a client…" className="pl-9" aria-label="Find a client" />
@@ -148,17 +145,17 @@ export function ClientProfilesPage() {
       ) : clients.isPending ? (
         <Card className="p-6"><ListSkeleton rows={4} /></Card>
       ) : clients.data.items.length === 0 ? (
-        <Card><EmptyState icon={Building2} title="No clients yet" /></Card>
+        <Card><EmptyState title="No clients yet" /></Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {clients.data.items.map((c) => (
             <Link key={c.id} to={`/clients/record/${c.id}`}>
               <Card className="h-full gap-4 p-5 transition-colors hover:border-line-strong">
                 <div className="flex items-start gap-3">
-                  <Avatar name={c.name} className="size-11 rounded-2xl" />
+                  <Avatar name={c.name} className="size-11 rounded-md" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{c.name}</p>
-                    <p className="truncate text-xs text-subtle">{[c.industry, c.city, c.country].filter(Boolean).join(" · ") || "—"}</p>
+                    <p className="truncate text-xs text-subtle">{[c.industry, c.city, c.country].filter(Boolean).join(", ") || "—"}</p>
                   </div>
                   <ClientStatusBadge status={c.status} />
                 </div>
@@ -183,14 +180,14 @@ export function ClientHistoryPage() {
   const feed = useClientFeed(page);
   return (
     <>
-      <PageHeader title="Client history" description="Status changes, services, contracts and onboarding across every client." />
+      <PageHeader title="Client history" />
       <Card className="overflow-hidden">
         {feed.isError ? (
           <ErrorState error={feed.error} onRetry={() => void feed.refetch()} />
         ) : feed.isPending ? (
           <div className="p-6"><ListSkeleton rows={6} /></div>
         ) : feed.data.items.length === 0 ? (
-          <EmptyState icon={History} title="No client activity yet" />
+          <EmptyState title="No client activity yet" />
         ) : (
           <>
             <ul className="divide-y divide-line/60">

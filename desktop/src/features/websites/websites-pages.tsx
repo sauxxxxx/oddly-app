@@ -8,15 +8,12 @@ import {
   EyeOff,
   Globe,
   KeyRound,
-  Lock,
   Pencil,
   Plus,
   RefreshCw,
   Search,
   Server,
-  ShieldCheck,
   Trash2,
-  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import * as React from "react";
@@ -67,13 +64,13 @@ function DueBadge({ date, today }: { date: string | null; today: string }) {
   if (d === null || date === null) return <span className="text-subtle">—</span>;
   const label = formatPlainDate(date, { month: "short", day: "numeric", year: "numeric" });
   if (d < 0) return <Badge tone="danger">Expired {label}</Badge>;
-  if (d <= 30) return <Badge tone={d <= 7 ? "danger" : "warning"}>{label} · {d}d</Badge>;
+  if (d <= 30) return <Badge tone={d <= 7 ? "danger" : "warning"}>{label}, {d}d</Badge>;
   return <span className="text-[13px] text-muted">{label}</span>;
 }
 
 export function UpBadge({ w }: { w: Pick<Website, "is_up" | "last_status_code" | "last_checked_at"> }) {
   if (w.is_up === null) return <Badge>Not checked</Badge>;
-  return w.is_up ? <Badge tone="success" dot>Up</Badge> : <Badge tone="danger" dot>Down{w.last_status_code ? ` · ${w.last_status_code}` : ""}</Badge>;
+  return w.is_up ? <Badge tone="success" dot>Up</Badge> : <Badge tone="danger" dot>Down{w.last_status_code ? `, ${w.last_status_code}` : ""}</Badge>;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +89,6 @@ export function WebsitesPage({ clientId, embedded }: { clientId?: string; embedd
       {!embedded && (
         <PageHeader
           title="Client websites"
-          description="Every site you build or maintain: hosting, renewals, uptime and maintenance."
           actions={can("websites.manage") && <Button onClick={() => setCreating(true)}><Plus /> Add website</Button>}
         />
       )}
@@ -106,12 +102,12 @@ export function WebsitesPage({ clientId, embedded }: { clientId?: string; embedd
         </div>
         {sites.isError ? <ErrorState error={sites.error} onRetry={() => void sites.refetch()} />
           : sites.isPending ? <div className="p-6"><ListSkeleton rows={4} /></div>
-          : sites.data.length === 0 ? <EmptyState icon={Globe} title="No websites yet" description="Add the sites you build or maintain to track renewals, uptime and maintenance." />
+          : sites.data.length === 0 ? <EmptyState title="No websites yet" />
           : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] text-sm">
                 <thead>
-                  <tr className="border-b border-line text-left text-xs uppercase tracking-[0.06em] text-subtle">
+                  <tr className="border-b border-line text-left text-xs text-subtle">
                     <th className="px-5 py-3 font-medium">Website</th><th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium">Uptime</th><th className="px-4 py-3 font-medium">Domain</th>
                     <th className="px-4 py-3 font-medium">Hosting</th><th className="px-4 py-3 font-medium">SSL</th><th className="px-4 py-3 font-medium">Developer</th>
@@ -122,7 +118,7 @@ export function WebsitesPage({ clientId, embedded }: { clientId?: string; embedd
                     <tr key={w.id} onClick={() => navigate(`/websites/record/${w.id}`)} className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-raised/40">
                       <td className="px-5 py-3">
                         <p className="font-medium">{w.domain}</p>
-                        <p className="text-xs text-subtle">{w.client_name}{w.hosting_provider && ` · ${w.hosting_provider}`}</p>
+                        <p className="text-xs text-subtle">{w.client_name}{w.hosting_provider && `, ${w.hosting_provider}`}</p>
                       </td>
                       <td className="px-4 py-3"><Badge tone={STATUS_TONE[w.status]}>{humanize(w.status)}</Badge></td>
                       <td className="px-4 py-3"><UpBadge w={w} />{w.uptime_7d !== null && <span className="ml-2 text-xs text-subtle">{w.uptime_7d}% 7d</span>}</td>
@@ -202,7 +198,7 @@ export function WebsiteDialog({ open, onOpenChange, website, clientId, onSaved }
             <Field label="Backups" htmlFor="ws-backup_notes" className="col-span-2"><Input {...bind("backup_notes")} placeholder="Where and how often backups run" /></Field>
             <Field label="Notes" htmlFor="ws-notes" className="col-span-2"><Textarea {...bind("notes")} rows={2} /></Field>
           </div>
-          <p className="text-xs text-subtle">Don't put passwords in notes — use the encrypted Credentials tab.</p>
+          <p className="text-xs text-subtle">Don't put passwords in notes. Use the Credentials tab.</p>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" loading={save.isPending}>{website ? "Save" : "Add website"}</Button>
@@ -261,8 +257,8 @@ export function WebsiteDetailPage() {
           <Card>
             <CardHeader title="Renewals" />
             <CardBody className="flex flex-col gap-3 text-sm">
-              <div className="flex items-center justify-between"><span className="text-subtle">Domain{w.domain_registrar && ` · ${w.domain_registrar}`}</span><DueBadge date={w.domain_expires_on} today={today} /></div>
-              <div className="flex items-center justify-between"><span className="text-subtle">Hosting{w.hosting_provider && ` · ${w.hosting_provider}`}</span><DueBadge date={w.hosting_renews_on} today={today} /></div>
+              <div className="flex items-center justify-between"><span className="text-subtle">Domain{w.domain_registrar && `, ${w.domain_registrar}`}</span><DueBadge date={w.domain_expires_on} today={today} /></div>
+              <div className="flex items-center justify-between"><span className="text-subtle">Hosting{w.hosting_provider && `, ${w.hosting_provider}`}</span><DueBadge date={w.hosting_renews_on} today={today} /></div>
               <div className="flex items-center justify-between"><span className="text-subtle">SSL certificate</span><DueBadge date={w.ssl_expires_on} today={today} /></div>
               <p className="text-xs text-subtle">Reminders go to the developer and account manager 30 and 7 days before each date.</p>
             </CardBody>
@@ -271,7 +267,7 @@ export function WebsiteDetailPage() {
             <CardHeader title="Details" />
             <CardBody className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between"><span className="text-subtle">Developer</span><span>{w.developer_name ?? "—"}</span></div>
-              <div className="flex justify-between"><span className="text-subtle">Maintenance</span><span>{humanize(w.maintenance_frequency)}{w.last_maintenance_at && ` · last ${formatRelative(w.last_maintenance_at)}`}</span></div>
+              <div className="flex justify-between"><span className="text-subtle">Maintenance</span><span>{humanize(w.maintenance_frequency)}{w.last_maintenance_at && `, last ${formatRelative(w.last_maintenance_at)}`}</span></div>
               <div className="flex flex-wrap justify-between gap-2"><span className="text-subtle">Technology</span><span className="flex flex-wrap gap-1">{w.tech_stack.length ? w.tech_stack.map((t) => <Badge key={t}>{t}</Badge>) : "—"}</span></div>
               {w.backup_notes && <div><p className="text-subtle">Backups</p><p className="mt-0.5 text-muted">{w.backup_notes}</p></div>}
               {w.notes && <div><p className="text-subtle">Notes</p><p className="mt-0.5 whitespace-pre-wrap text-muted">{w.notes}</p></div>}
@@ -301,13 +297,13 @@ function Monitoring({ site: w }: { site: WebsiteDetail }) {
         <Card className="p-5"><p className="text-xs text-subtle">Last checked</p><p className="mt-1 text-2xl font-semibold">{w.last_checked_at ? formatRelative(w.last_checked_at) : "Never"}</p></Card>
       </div>
       <Card>
-        <CardHeader title="Recent checks" description="Checked every 10 minutes while the site is active. Down alerts go to the developer and account manager." />
+        <CardHeader title="Recent checks" />
         <CardBody>
-          {recent.length === 0 ? <EmptyState icon={Activity} title="No checks yet" description="Use “Check now”, or wait for the next automatic check." compact /> : (
+          {recent.length === 0 ? <EmptyState title="No checks yet" compact /> : (
             <>
               <div className="flex h-24 items-end gap-1" role="img" aria-label="Response times">
                 {recent.map((c, i) => (
-                  <div key={i} title={`${formatDate(c.checked_at, me.timezone)} ${formatTime(c.checked_at, me.timezone)} · ${c.ok ? `${c.response_ms} ms` : c.error ?? `HTTP ${c.status_code}`}`}
+                  <div key={i} title={`${formatDate(c.checked_at, me.timezone)} ${formatTime(c.checked_at, me.timezone)}, ${c.ok ? `${c.response_ms} ms` : c.error ?? `HTTP ${c.status_code}`}`}
                     className={cn("flex-1 rounded-sm", c.ok ? "bg-accent/70" : "bg-danger")}
                     style={{ height: c.ok ? `${Math.max(8, ((c.response_ms ?? 0) / max) * 100)}%` : "100%" }} />
                 ))}
@@ -316,7 +312,7 @@ function Monitoring({ site: w }: { site: WebsiteDetail }) {
                 {w.checks.slice(0, 10).map((c, i) => (
                   <li key={i} className="flex items-center gap-3 py-2">
                     {c.ok ? <Check className="size-4 text-success" /> : <Activity className="size-4 text-danger" />}
-                    <span className="flex-1 text-muted">{c.ok ? `HTTP ${c.status_code} · ${c.response_ms} ms` : c.error ?? `HTTP ${c.status_code}`}</span>
+                    <span className="flex-1 text-muted">{c.ok ? `HTTP ${c.status_code}, ${c.response_ms} ms` : c.error ?? `HTTP ${c.status_code}`}</span>
                     <span className="text-xs text-subtle">{formatRelative(c.checked_at)}</span>
                   </li>
                 ))}
@@ -340,7 +336,7 @@ function Credentials({ site: w }: { site: WebsiteDetail }) {
   const [deleting, setDeleting] = React.useState<string | null>(null);
 
   if (!w.vault_configured) {
-    return <Card><EmptyState icon={Lock} title="The credential vault isn't set up" description="An administrator needs to set SECRETS_KEY on the API server before credentials can be stored." /></Card>;
+    return <Card><EmptyState title="The credential vault isn't set up" description="An administrator needs to finish setting up the server." /></Card>;
   }
   async function reveal(id: string) {
     if (shown[id]) return setShown(({ [id]: _, ...rest }) => rest);
@@ -359,20 +355,20 @@ function Credentials({ site: w }: { site: WebsiteDetail }) {
   return (
     <Card>
       <CardHeader
-        title={<span className="flex items-center gap-2"><ShieldCheck className="size-4 text-success" /> Credentials</span>}
-        description="Encrypted with AES-256-GCM before they're stored. Every reveal is recorded in the activity log, and hides again after 30 seconds."
+        title="Credentials"
+        description="Encrypted. Every reveal is logged."
         action={can("websites.manage") && <Button size="sm" variant="secondary" onClick={() => setEditing("new")}><Plus /> Add</Button>}
       />
       <CardBody>
         {error && <p className="mb-2 text-sm text-danger">{error}</p>}
-        {w.secrets.length === 0 ? <EmptyState icon={KeyRound} title="No credentials stored" description="WordPress admin, hosting panel, FTP, domain registrar…" compact /> : (
+        {w.secrets.length === 0 ? <EmptyState title="No credentials stored" compact /> : (
           <ul className="divide-y divide-line/60">
             {w.secrets.map((s) => (
               <li key={s.id} className="flex items-center gap-3 py-3">
                 <KeyRound className="size-4 shrink-0 text-subtle" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{s.label}</p>
-                  <p className="truncate text-xs text-subtle">{[s.username, s.login_url].filter(Boolean).join(" · ") || "—"}</p>
+                  <p className="truncate text-xs text-subtle">{[s.username, s.login_url].filter(Boolean).join(", ") || "—"}</p>
                   <p className="mt-1 font-mono text-sm">{shown[s.id] ?? "••••••••••••"}</p>
                 </div>
                 {s.login_url && <Button variant="ghost" size="icon-sm" aria-label="Open login page" onClick={() => openExternal(s.login_url!)}><ExternalLink /></Button>}
@@ -450,7 +446,7 @@ function MaintenanceList({ websiteId, assigneeMe }: { websiteId?: string; assign
       </div>
       {items.isError ? <ErrorState error={items.error} onRetry={() => void items.refetch()} />
         : items.isPending ? <div className="p-6"><ListSkeleton rows={3} /></div>
-        : items.data.length === 0 ? <EmptyState icon={Wrench} title={status === "open" ? "Nothing scheduled" : "No maintenance history"} description="Plugin updates, backups, security checks and renewals are tracked here." />
+        : items.data.length === 0 ? <EmptyState title={status === "open" ? "Nothing scheduled" : "No maintenance history"} />
         : (
           <ul className="divide-y divide-line/60">
             {items.data.map((x) => (
@@ -464,10 +460,10 @@ function MaintenanceList({ websiteId, assigneeMe }: { websiteId?: string; assign
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{x.title}</p>
                   <p className="truncate text-xs text-subtle">
-                    {!websiteId && <><Link to={`/websites/record/${x.website_id}`} className="text-accent hover:underline">{x.domain}</Link> · </>}
+                    {!websiteId && <><Link to={`/websites/record/${x.website_id}`} className="text-accent hover:underline">{x.domain}</Link>, </>}
                     {MAINTENANCE_TYPES[x.task_type] ?? x.task_type}
-                    {x.completed_at ? ` · done ${formatRelative(x.completed_at)}${x.completed_by_name ? ` by ${x.completed_by_name}` : ""}` : x.scheduled_for ? ` · ${formatPlainDate(x.scheduled_for, { month: "short", day: "numeric" })}` : ""}
-                    {x.assigned_name && !x.completed_at && ` · ${x.assigned_name}`}
+                    {x.completed_at ? `, done ${formatRelative(x.completed_at)}${x.completed_by_name ? ` by ${x.completed_by_name}` : ""}` : x.scheduled_for ? `, ${formatPlainDate(x.scheduled_for, { month: "short", day: "numeric" })}` : ""}
+                    {x.assigned_name && !x.completed_at && `, ${x.assigned_name}`}
                   </p>
                 </div>
                 {x.overdue && <Badge tone="danger">Overdue</Badge>}
@@ -528,7 +524,7 @@ export function MaintenancePage() {
   const [mine, setMine] = React.useState(false);
   return (
     <>
-      <PageHeader title="Website maintenance" description="Scheduled and completed maintenance across every client site. Log new work from a website's page." />
+      <PageHeader title="Website maintenance" />
       <Tabs className="mb-4" value={mine ? "mine" : "all"} onChange={(v) => setMine(v === "mine")} tabs={[{ value: "all", label: "Everyone" }, { value: "mine", label: "Mine" }]} />
       <Card className="overflow-hidden"><MaintenanceList key={String(mine)} assigneeMe={mine} /></Card>
     </>
@@ -536,7 +532,7 @@ export function MaintenancePage() {
 }
 
 /** Domain, hosting or SSL renewals as a focused table. */
-function RenewalsTable({ field, title, description, icon: Icon }: { field: "domain_expires_on" | "hosting_renews_on" | "ssl_expires_on"; title: string; description: string; icon: LucideIcon }) {
+function RenewalsTable({ field, title, icon: Icon }: { field: "domain_expires_on" | "hosting_renews_on" | "ssl_expires_on"; title: string; icon: LucideIcon }) {
   const me = useMe();
   const navigate = useNavigate();
   const today = todayIn(me.timezone);
@@ -544,11 +540,11 @@ function RenewalsTable({ field, title, description, icon: Icon }: { field: "doma
   const rows = [...(sites.data ?? [])].sort((a, b) => (a[field] ?? "9999").localeCompare(b[field] ?? "9999"));
   return (
     <>
-      <PageHeader title={title} description={description} />
+      <PageHeader title={title} />
       <Card className="overflow-hidden">
         {sites.isError ? <ErrorState error={sites.error} onRetry={() => void sites.refetch()} />
           : sites.isPending ? <div className="p-6"><ListSkeleton rows={4} /></div>
-          : rows.length === 0 ? <EmptyState icon={Icon} title="No websites yet" />
+          : rows.length === 0 ? <EmptyState title="No websites yet" />
           : (
             <ul className="divide-y divide-line/60">
               {rows.map((w) => (
@@ -556,7 +552,7 @@ function RenewalsTable({ field, title, description, icon: Icon }: { field: "doma
                   <Icon className="size-4 text-subtle" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{w.domain}</p>
-                    <p className="truncate text-xs text-subtle">{w.client_name}{field === "domain_expires_on" && w.domain_registrar && ` · ${w.domain_registrar}`}{field === "hosting_renews_on" && w.hosting_provider && ` · ${w.hosting_provider}`}</p>
+                    <p className="truncate text-xs text-subtle">{w.client_name}{field === "domain_expires_on" && w.domain_registrar && `, ${w.domain_registrar}`}{field === "hosting_renews_on" && w.hosting_provider && `, ${w.hosting_provider}`}</p>
                   </div>
                   <DueBadge date={w[field]} today={today} />
                 </li>
@@ -568,8 +564,8 @@ function RenewalsTable({ field, title, description, icon: Icon }: { field: "doma
   );
 }
 
-export const DomainsPage = () => <RenewalsTable field="domain_expires_on" title="Domain management" description="Domain expiry dates, soonest first. Reminders are sent at 30 and 7 days." icon={Globe} />;
-export const HostingPage = () => <RenewalsTable field="hosting_renews_on" title="Hosting information" description="Hosting providers and renewal dates, soonest first." icon={Server} />;
+export const DomainsPage = () => <RenewalsTable field="domain_expires_on" title="Domain management" icon={Globe} />;
+export const HostingPage = () => <RenewalsTable field="hosting_renews_on" title="Hosting information" icon={Server} />;
 
 export function MonitoringPage() {
   const navigate = useNavigate();
@@ -578,19 +574,19 @@ export function MonitoringPage() {
   const down = rows.filter((w) => w.is_up === false).length;
   return (
     <>
-      <PageHeader title="Website monitoring" description="Active sites are checked every 10 minutes. The developer and account manager are alerted when a site goes down." />
+      <PageHeader title="Website monitoring" />
       {down > 0 && <div className="mb-4"><FormAlert>{down} site{down === 1 ? " is" : "s are"} down right now.</FormAlert></div>}
       <Card className="overflow-hidden">
         {sites.isError ? <ErrorState error={sites.error} onRetry={() => void sites.refetch()} />
           : sites.isPending ? <div className="p-6"><ListSkeleton rows={4} /></div>
-          : rows.length === 0 ? <EmptyState icon={Activity} title="No active websites" />
+          : rows.length === 0 ? <EmptyState title="No active websites" />
           : (
             <ul className="divide-y divide-line/60">
               {rows.map((w) => (
                 <li key={w.id} onClick={() => navigate(`/websites/record/${w.id}`)} className="flex cursor-pointer items-center gap-4 px-5 py-3.5 hover:bg-raised/40">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{w.domain}</p>
-                    <p className="truncate text-xs text-subtle">{w.client_name} · {w.last_checked_at ? `checked ${formatRelative(w.last_checked_at)}` : "not checked yet"}</p>
+                    <p className="truncate text-xs text-subtle">{w.client_name}, {w.last_checked_at ? `checked ${formatRelative(w.last_checked_at)}` : "not checked yet"}</p>
                   </div>
                   <span className="w-24 text-right text-xs tabular-nums text-muted">{w.avg_response_ms !== null ? `${Math.round(w.avg_response_ms)} ms` : "—"}</span>
                   <span className="w-20 text-right text-xs tabular-nums text-muted">{w.uptime_7d !== null ? `${w.uptime_7d}%` : "—"}</span>

@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckSquare, FolderKanban, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -17,7 +17,14 @@ import { Avatar, Progress } from "@/components/ui/misc";
 import { useAuth, useMe } from "@/features/auth/auth-context";
 import { FormAlert } from "@/features/auth/auth-layout";
 import { useLookups } from "@/features/leads/api";
-import { useDeleteProject, useProject, useProjects, useProjectTemplates, useSaveProject, useTasks } from "@/features/ops/api";
+import {
+  useDeleteProject,
+  useProject,
+  useProjects,
+  useProjectTemplates,
+  useSaveProject,
+  useTasks,
+} from "@/features/ops/api";
 import { ApiError, errorMessage } from "@/lib/api";
 import { formatPlainDate, humanize, todayIn } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -53,7 +60,6 @@ export function ProjectsPage() {
     <>
       <PageHeader
         title="Projects"
-        description="Client work and internal projects, with tasks, deliverables and files."
         actions={can("projects.manage") && <Button onClick={() => setCreating(true)}><Plus /> New project</Button>}
       />
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -69,7 +75,7 @@ export function ProjectsPage() {
       ) : projects.isPending ? (
         <Card className="p-6"><ListSkeleton rows={4} /></Card>
       ) : projects.data.length === 0 ? (
-        <Card><EmptyState icon={FolderKanban} title="No projects here" description="Start one from a template — website build, social media setup, branding or monthly maintenance." /></Card>
+        <Card><EmptyState title="No projects here" /></Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {projects.data.map((p) => <ProjectCard key={p.id} project={p} onClick={() => navigate(`/projects/record/${p.id}`)} />)}
@@ -87,13 +93,13 @@ export function ProjectCard({ project: p, onClick }: { project: Project; onClick
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-medium">{p.name}</p>
-          <p className="truncate text-xs text-subtle">{p.client_name ?? "Internal"}{p.category && ` · ${p.category}`}</p>
+          <p className="truncate text-xs text-subtle">{p.client_name ?? "Internal"}{p.category && `, ${p.category}`}</p>
         </div>
         <Badge tone={STATUS_TONE[p.status]} dot>{humanize(p.status)}</Badge>
       </div>
       <div>
         <div className="mb-1.5 flex justify-between text-xs text-subtle">
-          <span>{p.done_tasks}/{p.total_tasks} tasks{p.overdue_tasks > 0 && <span className="text-danger-fg"> · {p.overdue_tasks} overdue</span>}</span>
+          <span>{p.done_tasks}/{p.total_tasks} tasks{p.overdue_tasks > 0 && <span className="text-danger-fg">, {p.overdue_tasks} overdue</span>}</span>
           <span className="tabular-nums">{Math.round(pct)}%</span>
         </div>
         <Progress value={pct} />
@@ -274,7 +280,7 @@ export function ProjectDetailPage() {
           ) : tasks.isPending ? (
             <Card className="p-6"><ListSkeleton rows={5} /></Card>
           ) : tasks.data.length === 0 ? (
-            <Card><EmptyState icon={CheckSquare} title="No tasks yet" action={<Button size="sm" onClick={() => dialog.open(null, { project_id: p.id })}><Plus /> Add task</Button>} /></Card>
+            <Card><EmptyState title="No tasks yet" action={<Button size="sm" onClick={() => dialog.open(null, { project_id: p.id })}><Plus /> Add task</Button>} /></Card>
           ) : view === "list" ? (
             <Card className="overflow-hidden"><TaskList tasks={tasks.data} onOpen={(tid) => dialog.open(tid)} showProject={false} /></Card>
           ) : (
@@ -287,7 +293,7 @@ export function ProjectDetailPage() {
             <CardBody className="pt-5">
               <div className="mb-1.5 flex justify-between text-sm"><span className="text-muted">Progress</span><span className="tabular-nums">{Math.round(pct)}%</span></div>
               <Progress value={pct} />
-              <p className="mt-2 text-xs text-subtle">{p.done_tasks} of {p.total_tasks} tasks done{p.overdue_tasks > 0 && ` · ${p.overdue_tasks} overdue`}</p>
+              <p className="mt-2 text-xs text-subtle">{p.done_tasks} of {p.total_tasks} tasks done{p.overdue_tasks > 0 && `, ${p.overdue_tasks} overdue`}</p>
               <dl className="mt-4 flex flex-col gap-2 border-t border-line pt-4 text-sm">
                 <div className="flex justify-between"><dt className="text-subtle">Owner</dt><dd>{p.owner_name ?? "—"}</dd></div>
                 <div className="flex justify-between"><dt className="text-subtle">Priority</dt><dd><PriorityBadge priority={p.priority} /></dd></div>
@@ -323,11 +329,11 @@ export function ProjectDetailPage() {
 // Task views
 // ---------------------------------------------------------------------------
 
-function TasksShell({ title, description, children, dialogDefaults }: { title: string; description: string; children: (open: (id: string | null, d?: { due_at?: string }) => void) => React.ReactNode; dialogDefaults?: { project_id?: string } }) {
+function TasksShell({ title, children, dialogDefaults }: { title: string; children: (open: (id: string | null, d?: { due_at?: string }) => void) => React.ReactNode; dialogDefaults?: { project_id?: string } }) {
   const dialog = useTaskDialog();
   return (
     <>
-      <PageHeader title={title} description={description} actions={<Button onClick={() => dialog.open(null, dialogDefaults)}><Plus /> New task</Button>} />
+      <PageHeader title={title} actions={<Button onClick={() => dialog.open(null, dialogDefaults)}><Plus /> New task</Button>} />
       {children((id, d) => dialog.open(id, d))}
       {dialog.node}
     </>
@@ -339,13 +345,13 @@ export function MyTasksPage() {
   const tasks = useTasks({ assignee: "me", status: status === "all" ? undefined : status });
   const groups = groupTasks(tasks.data ?? []);
   return (
-    <TasksShell title="My tasks" description="Everything assigned to you, across projects and clients.">
+    <TasksShell title="My tasks">
       {(open) => (
         <>
           <Tabs className="mb-4" value={status} onChange={setStatus} tabs={[{ value: "open", label: "Open" }, { value: "done", label: "Done" }, { value: "all", label: "All" }]} />
           {tasks.isError ? <Card><ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} /></Card>
             : tasks.isPending ? <Card className="p-6"><ListSkeleton rows={5} /></Card>
-            : !tasks.data.length ? <Card><EmptyState icon={CheckSquare} title={status === "open" ? "You're all clear" : "No tasks"} description="Tasks assigned to you show up here." /></Card>
+            : !tasks.data.length ? <Card><EmptyState title={status === "open" ? "You're all clear" : "No tasks"} /></Card>
             : status !== "open" ? <Card className="overflow-hidden"><TaskList tasks={tasks.data} onOpen={open} /></Card>
             : (
               <div className="flex flex-col gap-4">
@@ -384,18 +390,18 @@ export function TeamTasksPage() {
     byPerson.set(k, [...(byPerson.get(k) ?? []), t]);
   }
   return (
-    <TasksShell title="Team tasks" description="Open tasks by person — spot who's overloaded and what's overdue.">
+    <TasksShell title="Team tasks">
       {(open) =>
         tasks.isError ? <Card><ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} /></Card>
         : tasks.isPending ? <Card className="p-6"><ListSkeleton rows={5} /></Card>
-        : byPerson.size === 0 ? <Card><EmptyState icon={Users} title="No open tasks" /></Card>
+        : byPerson.size === 0 ? <Card><EmptyState title="No open tasks" /></Card>
         : (
           <div className="flex flex-col gap-4">
             {[...byPerson.entries()].sort((a, b) => b[1].length - a[1].length).map(([name, list]) => (
               <Card key={name} className="overflow-hidden">
                 <CardHeader
                   title={<span className="flex items-center gap-2"><Avatar name={name} className="size-7 text-[10px]" />{name}</span>}
-                  description={`${list.length} open${list.some((t) => t.overdue) ? ` · ${list.filter((t) => t.overdue).length} overdue` : ""}`}
+                  description={`${list.length} open${list.some((t) => t.overdue) ? `, ${list.filter((t) => t.overdue).length} overdue` : ""}`}
                   className="pb-3"
                 />
                 <TaskList tasks={list} onOpen={open} />
@@ -415,7 +421,7 @@ export function TaskBoardPage() {
   const projects = useProjects({ status: "current" });
   const tasks = useTasks({ assignee: assignee || undefined, project_id: projectId || undefined });
   return (
-    <TasksShell title="Kanban board" description="Drag tasks between columns to update their status." dialogDefaults={{ project_id: projectId || undefined }}>
+    <TasksShell title="Kanban board" dialogDefaults={{ project_id: projectId || undefined }}>
       {(open) => (
         <>
           <div className="mb-4 flex flex-wrap gap-2">
@@ -451,7 +457,7 @@ export function TaskCalendarPage() {
     byDay.set(k, [...(byDay.get(k) ?? []), t]);
   }
   return (
-    <TasksShell title="Calendar" description="Task due dates by day. Click a day to add a task due then.">
+    <TasksShell title="Calendar">
       {(open) => (
         <Card className="p-5">
           <Tabs className="mb-3" value={mine ? "mine" : "all"} onChange={(v) => setMine(v === "mine")} tabs={[{ value: "all", label: "Everyone" }, { value: "mine", label: "Mine" }]} />
@@ -469,7 +475,7 @@ export function TaskCalendarPage() {
                     "w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] transition-colors",
                     t.status === "done" ? "bg-success-soft text-success-fg line-through" : t.overdue ? "bg-danger-soft text-danger-fg" : "bg-accent-soft text-accent-fg hover:bg-accent/30",
                   )}
-                  title={`${t.title}${t.assignee_name ? ` · ${t.assignee_name}` : ""}`}
+                  title={`${t.title}${t.assignee_name ? `, ${t.assignee_name}` : ""}`}
                 >
                   {t.title}
                 </button>

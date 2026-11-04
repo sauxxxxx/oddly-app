@@ -1,19 +1,7 @@
-import {
-  ArrowLeft,
-  AtSign,
-  Building2,
-  ExternalLink,
-  Globe,
-  MapPin,
-  Pencil,
-  Phone,
-  Trash2,
-  UserRound,
-} from "lucide-react";
+import { ArrowLeft, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 
-import { FacebookIcon as Facebook, InstagramIcon as Instagram, LinkedinIcon as Linkedin } from "@/components/brand/social-icons";
 import { PageHeader } from "@/components/layout/app-shell";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/states";
 import { Badge, PriorityBadge } from "@/components/ui/badge";
@@ -61,7 +49,6 @@ export function LeadDetailPage() {
       return (
         <Card>
           <EmptyState
-            icon={Building2}
             title="Lead not found"
             description="It may have been deleted or merged into another lead, or it isn't assigned to you."
             action={<Button asChild variant="secondary" size="sm"><Link to="/leads"><ArrowLeft /> All leads</Link></Button>}
@@ -88,7 +75,7 @@ export function LeadDetailPage() {
           <span className="flex flex-wrap items-center gap-2">
             <StageDot name={l.stage_name} color={l.stage_color} />
             <span className="text-subtle">·</span>
-            <span>{[l.industry, l.city, l.country].filter(Boolean).join(" · ") || "No details yet"}</span>
+            <span>{[l.industry, l.city, l.country].filter(Boolean).join(", ") || "No details yet"}</span>
             {l.status !== "active" && <Badge tone={l.status === "converted" ? "success" : "neutral"}>{l.status}</Badge>}
             {l.client_id && <Badge tone="success">Client</Badge>}
           </span>
@@ -141,11 +128,10 @@ export function LeadDetailPage() {
   );
 }
 
-function InfoRow({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="mt-0.5 size-4 shrink-0 text-subtle" />
-      <div className="min-w-0 flex-1">
+    <div className="min-w-0 py-2">
+      <div>
         <p className="text-xs text-subtle">{label}</p>
         <div className="mt-0.5 break-words text-sm text-fg">{children}</div>
       </div>
@@ -170,23 +156,23 @@ function Overview({ lead: l }: { lead: LeadDetail }) {
       <Card>
         <CardHeader title="Business" />
         <CardBody className="pt-2">
-          <InfoRow icon={Building2} label="Industry / category">{[l.industry, l.category].filter(Boolean).join(" · ") || dash}</InfoRow>
-          <InfoRow icon={MapPin} label="Location">
+          <InfoRow label="Industry / category">{[l.industry, l.category].filter(Boolean).join(", ") || dash}</InfoRow>
+          <InfoRow label="Location">
             {[l.address, l.city, l.region, l.country].filter(Boolean).join(", ") || dash}
             <span className="ml-2"><Badge>{l.market === "local" ? "Local" : "International"}</Badge></span>
           </InfoRow>
-          <InfoRow icon={Phone} label="Business phone">{l.business_phone ?? dash}</InfoRow>
-          <InfoRow icon={AtSign} label="Business email">{l.business_email ?? dash}</InfoRow>
+          <InfoRow label="Business phone">{l.business_phone ?? dash}</InfoRow>
+          <InfoRow label="Business email">{l.business_email ?? dash}</InfoRow>
         </CardBody>
       </Card>
       <Card>
         <CardHeader title="Online presence" />
         <CardBody className="pt-2">
-          <InfoRow icon={Globe} label="Website"><LinkValue url={l.website_url} /></InfoRow>
-          <InfoRow icon={Facebook} label="Facebook"><LinkValue url={l.facebook_url} /></InfoRow>
-          <InfoRow icon={Instagram} label="Instagram"><LinkValue url={l.instagram_url} /></InfoRow>
-          <InfoRow icon={Linkedin} label="LinkedIn"><LinkValue url={l.linkedin_url} /></InfoRow>
-          <InfoRow icon={MapPin} label="Google Maps"><LinkValue url={l.google_maps_url} /></InfoRow>
+          <InfoRow label="Website"><LinkValue url={l.website_url} /></InfoRow>
+          <InfoRow label="Facebook"><LinkValue url={l.facebook_url} /></InfoRow>
+          <InfoRow label="Instagram"><LinkValue url={l.instagram_url} /></InfoRow>
+          <InfoRow label="LinkedIn"><LinkValue url={l.linkedin_url} /></InfoRow>
+          <InfoRow label="Google Maps"><LinkValue url={l.google_maps_url} /></InfoRow>
         </CardBody>
       </Card>
       <Card>
@@ -194,15 +180,15 @@ function Overview({ lead: l }: { lead: LeadDetail }) {
         <CardBody className="pt-2">
           {l.contact_name || l.contact_email || l.contact_phone ? (
             <>
-              <InfoRow icon={UserRound} label="Name">
+              <InfoRow label="Name">
                 {l.contact_name ?? dash}
-                {l.contact_position && <span className="text-subtle"> · {l.contact_position}</span>}
+                {l.contact_position && <span className="text-subtle">, {l.contact_position}</span>}
               </InfoRow>
-              <InfoRow icon={AtSign} label="Email">{l.contact_email ?? dash}</InfoRow>
-              <InfoRow icon={Phone} label="Phone">{l.contact_phone ?? dash}</InfoRow>
+              <InfoRow label="Email">{l.contact_email ?? dash}</InfoRow>
+              <InfoRow label="Phone">{l.contact_phone ?? dash}</InfoRow>
             </>
           ) : (
-            <EmptyState icon={UserRound} title="No contact person yet" description="Add one with Edit once you find who makes decisions." compact />
+            <EmptyState title="No contact person yet" compact />
           )}
         </CardBody>
       </Card>
@@ -212,7 +198,7 @@ function Overview({ lead: l }: { lead: LeadDetail }) {
           {l.research_notes ? (
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted">{l.research_notes}</p>
           ) : (
-            <EmptyState icon={Pencil} title="No notes" description="Quick notes from your research go here." compact />
+            <EmptyState title="No notes" compact />
           )}
         </CardBody>
       </Card>
@@ -226,10 +212,10 @@ function Activity({ lead }: { lead: LeadDetail }) {
     <div className="flex flex-col gap-4">
       {Extra.map((E, i) => <E key={i} lead={lead} />)}
       <Card>
-        <CardHeader title="History" description="Every change to this lead" />
+        <CardHeader title="History" />
         <CardBody>
           {lead.timeline.length === 0 ? (
-            <EmptyState icon={Building2} title="No history yet" compact />
+            <EmptyState title="No history yet" compact />
           ) : (
             <ol className="relative flex flex-col gap-4 before:absolute before:bottom-2 before:left-[17px] before:top-2 before:w-px before:bg-line">
               {lead.timeline.map((a) => (
@@ -256,7 +242,7 @@ function Summary({ lead: l }: { lead: LeadDetail }) {
     ["Owner", l.assigned_name ?? "Unassigned"],
     ["Priority", <PriorityBadge key="p" priority={l.priority} />],
     ["Estimated value", l.estimated_value ? formatMoney(l.estimated_value, l.currency) : "—"],
-    ["Source", [l.source_name, l.source_detail].filter(Boolean).join(" · ") || "—"],
+    ["Source", [l.source_name, l.source_detail].filter(Boolean).join(", ") || "—"],
     ["Last contacted", l.last_contacted_at ? formatRelative(l.last_contacted_at) : "Never"],
     ["Added", formatDate(l.created_at, me.timezone, { year: "numeric" })],
   ];
@@ -264,11 +250,11 @@ function Summary({ lead: l }: { lead: LeadDetail }) {
     <div className="flex flex-col gap-4 self-start">
       <Card className={overdue ? "border-danger/40" : "border-accent/30"}>
         <CardBody className="pt-5">
-          <p className="text-xs font-medium uppercase tracking-[0.08em] text-subtle">Next action</p>
+          <p className="text-xs font-medium text-subtle">Next action</p>
           <p className="mt-2 text-[15px] font-medium text-fg">{l.next_action ?? "None set"}</p>
           {l.next_action_due_at && (
             <p className={overdue ? "mt-1 text-sm text-danger-fg" : "mt-1 text-sm text-muted"}>
-              {overdue ? "Overdue · " : "Due "}
+              {overdue ? "Overdue, " : "Due "}
               {formatDate(l.next_action_due_at, me.timezone, { weekday: "short", month: "short", day: "numeric" })}{" "}
               {formatTime(l.next_action_due_at, me.timezone)}
             </p>

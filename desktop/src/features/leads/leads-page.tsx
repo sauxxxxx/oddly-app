@@ -1,16 +1,4 @@
-import {
-  Bookmark,
-  ChevronDown,
-  Download,
-  FileSpreadsheet,
-  ListPlus,
-  Plus,
-  Search,
-  Trash2,
-  Upload,
-  Users,
-  X,
-} from "lucide-react";
+import { Bookmark, ChevronDown, Download, ListPlus, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
@@ -174,11 +162,9 @@ export function LeadsPage({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Exports every lead matching the current filters</DropdownMenuLabel>
-                <DropdownMenuItem onSelect={() => void doExport("xlsx")}>
-                  <FileSpreadsheet /> Excel (.xlsx)
+                <DropdownMenuItem onSelect={() => void doExport("xlsx")}>Excel (.xlsx)
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => void doExport("csv")}>
-                  <FileSpreadsheet /> CSV
+                <DropdownMenuItem onSelect={() => void doExport("csv")}>CSV
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -270,20 +256,13 @@ export function LeadsPage({
         ) : data && data.total === 0 && !leads.isFetching ? (
           activeFilterCount > 0 || filters.search ? (
             <EmptyState
-              icon={Search}
               title="No leads match these filters"
               description="Try removing a filter or searching for something else."
               action={<Button variant="secondary" size="sm" onClick={() => { reset(); setSearchDraft(""); }}>Clear filters</Button>}
             />
           ) : (
             <EmptyState
-              icon={Users}
               title={listId ? "This list is empty" : "No leads yet"}
-              description={
-                listId
-                  ? "Add leads to this list from any lead table: select them, then use “Add to list”."
-                  : "Add businesses one by one, or import your existing spreadsheets — ODDLY maps the columns and flags duplicates."
-              }
               action={
                 !listId && (
                   <div className="flex gap-2">
@@ -478,13 +457,12 @@ function SavedFilters({ filters, onApply }: { filters: LeadFilters; onApply: (f:
             <DropdownMenuLabel>No saved filters yet</DropdownMenuLabel>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setNaming(true)}>
-            <Plus /> Save current filters…
+          <DropdownMenuItem onSelect={() => setNaming(true)}>Save current filters…
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <Dialog open={naming} onOpenChange={setNaming}>
-        <DialogContent title="Save filters" description="Get back to this view in one click." className="max-w-md">
+        <DialogContent title="Save filters" className="max-w-md">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -518,7 +496,7 @@ function BulkBar({ ids, onDone, listId }: { ids: string[]; onDone: () => void; l
   const run = (action: BulkAction) => bulk.mutate({ ...action, ids }, { onSuccess: onDone });
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-line bg-accent-soft/40 px-4 py-2.5 animate-fade-in">
+    <div className="flex flex-wrap items-center gap-2 border-b border-line bg-accent-soft/40 px-4 py-2.5">
       <span className="mr-2 text-sm font-medium">{ids.length} selected</span>
       <BulkMenu label="Assign" loading={bulk.isPending}>
         <DropdownMenuItem onSelect={() => run({ action: "assign", user_id: null })}>Unassigned</DropdownMenuItem>

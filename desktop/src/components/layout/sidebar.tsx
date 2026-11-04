@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Search, UserRound } from "lucide-react";
+import { ChevronDown, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import * as React from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
 
@@ -43,19 +43,16 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full shrink-0 flex-col rounded-[22px] border border-line bg-sidebar transition-[width] duration-200 ease-out",
-        collapsed ? "w-[76px]" : "w-[272px]",
+        "flex h-full shrink-0 flex-col border-r border-line bg-sidebar transition-[width] duration-200 ease-out",
+        collapsed ? "w-[64px]" : "w-[248px]",
       )}
     >
       {/* Workspace header */}
       <div className={cn("flex items-center gap-3 p-4", collapsed && "justify-center px-0")}>
         <Link to="/" className="flex min-w-0 items-center gap-3" aria-label="ODDLY home">
-          <LogoMark className="size-10 shrink-0" />
+          <LogoMark className="size-7 shrink-0" />
           {!collapsed && (
-            <div className="min-w-0">
-              <Wordmark className="block leading-5" />
-              <p className="truncate text-xs text-subtle">Agency workspace</p>
-            </div>
+            <Wordmark className="block leading-5" />
           )}
         </Link>
       </div>
@@ -92,7 +89,7 @@ export function Sidebar({
               {collapsed ? (
                 <div className="mx-auto mb-2 h-px w-6 bg-line" />
               ) : (
-                <p className="mb-1.5 px-3 text-[11px] font-medium uppercase tracking-[0.08em] text-subtle">
+                <p className="mb-1.5 px-3 text-xs text-subtle">
                   {section.label}
                 </p>
               )}
@@ -119,7 +116,7 @@ export function Sidebar({
           <button
             onClick={onToggle}
             className={cn(
-              "mt-1 flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] text-subtle transition-colors hover:bg-raised hover:text-fg",
+              "mt-1 flex h-9 items-center gap-2.5 rounded-md px-3 text-[13px] text-subtle transition-colors hover:bg-raised hover:text-fg",
               collapsed ? "w-10 justify-center px-0" : "w-full",
             )}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -152,13 +149,13 @@ function ModuleItem({
   const children = module.children?.filter((c) => can(c.permission)) ?? [];
 
   const rowClass = cn(
-    "group flex h-10 w-full items-center gap-3 rounded-control px-3 text-[14px] transition-colors",
+    "group flex h-9 w-full items-center gap-3 rounded-control px-3 text-sm transition-colors",
     active
-      ? "border border-line bg-raised text-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.04)]"
-      : "border border-transparent text-muted hover:bg-raised/60 hover:text-fg",
+      ? "bg-raised font-medium text-fg"
+      : "text-muted hover:bg-raised/60 hover:text-fg",
     collapsed && "justify-center px-0",
   );
-  const icon = <Icon className={cn("size-[18px] shrink-0", active ? "text-accent" : "text-subtle group-hover:text-muted")} />;
+  const icon = collapsed && <Icon className={cn("size-[18px] shrink-0", active ? "text-accent" : "text-subtle group-hover:text-muted")} />;
 
   if (collapsed || children.length === 0) {
     const target = children[0]?.path ?? module.path;
@@ -189,7 +186,7 @@ function ModuleItem({
         <ChevronDown className={cn("size-4 text-subtle transition-transform", expanded && "rotate-180")} />
       </button>
       {expanded && (
-        <ul className="relative my-1 ml-[21px] flex flex-col gap-0.5 border-l border-line pl-3 animate-fade-in">
+        <ul className="my-0.5 ml-3 flex flex-col gap-0.5">
           {children.map((c) => (
             <li key={c.path}>
               <NavLink
@@ -197,10 +194,8 @@ function ModuleItem({
                 end
                 className={({ isActive }) =>
                   cn(
-                    "relative flex h-8 items-center rounded-lg px-2.5 text-[13px] transition-colors",
-                    isActive
-                      ? "bg-accent-soft font-medium text-fg before:absolute before:-left-[13px] before:top-1.5 before:bottom-1.5 before:w-px before:bg-accent"
-                      : "text-subtle hover:text-fg",
+                    "flex h-8 items-center rounded-md px-2.5 text-[13px] transition-colors",
+                    isActive ? "font-medium text-accent-fg" : "text-subtle hover:text-fg",
                   )
                 }
               >
@@ -243,8 +238,7 @@ function UserCard({ collapsed }: { collapsed: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-60">
         <DropdownMenuLabel>Signed in as {me.email}</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => navigate("/settings/profile")}>
-          <UserRound /> My profile
+        <DropdownMenuItem onSelect={() => navigate("/settings/profile")}>My profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <div className="px-2.5 py-2">
@@ -252,8 +246,7 @@ function UserCard({ collapsed }: { collapsed: boolean }) {
           <ThemeSwitch compact className="w-full justify-between" />
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem destructive onSelect={() => void signOut()}>
-          <LogOut /> Sign out
+        <DropdownMenuItem destructive onSelect={() => void signOut()}>Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

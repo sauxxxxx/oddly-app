@@ -27,7 +27,7 @@ const TIME_ZONES: string[] = (() => {
 export function ProfilePage() {
   return (
     <>
-      <PageHeader title="My profile" description="Your details and sign-in settings." />
+      <PageHeader title="My profile" />
       <div className="grid max-w-5xl grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <DetailsCard />
         <div className="flex flex-col gap-4">

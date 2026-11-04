@@ -1,9 +1,7 @@
 import {
   ArrowLeft,
-  Copy,
   Download,
   GripVertical,
-  LayoutTemplate,
   Plus,
   RotateCcw,
   Save,
@@ -22,7 +20,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TagInput, Textarea } from "@/components/ui/form-controls";
 import { Field, Input, Select } from "@/components/ui/input";
 import { useAuth, useMe } from "@/features/auth/auth-context";
@@ -155,7 +158,7 @@ function Editor({ proposal: p }: { proposal: ProposalDetail }) {
         <Link to="/sales/proposals"><ArrowLeft /> Proposals</Link>
       </Button>
       <PageHeader
-        title={p.is_template ? draft.title || "Untitled template" : `${p.number} · ${p.recipient.company_name ?? ""}`}
+        title={p.is_template ? draft.title || "Untitled template" : `${p.number}, ${p.recipient.company_name ?? ""}`}
         description={
           <span className="flex flex-wrap items-center gap-2">
             {p.is_template ? <Badge tone="accent">Template</Badge> : <Badge tone={PROPOSAL_TONE[p.status]} dot>{PROPOSAL_LABEL[p.status]}</Badge>}
@@ -187,15 +190,13 @@ function Editor({ proposal: p }: { proposal: ProposalDetail }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="secondary">More</Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => duplicate.mutate({ id: p.id, as_template: false }, { onSuccess: (n) => navigate(`/sales/proposals/${n.id}`) })}>
-                    <Copy /> Duplicate
+                  <DropdownMenuItem onSelect={() => duplicate.mutate({ id: p.id, as_template: false }, { onSuccess: (n) => navigate(`/sales/proposals/${n.id}`) })}>Duplicate
                   </DropdownMenuItem>
                   {!p.is_template && (
-                    <DropdownMenuItem onSelect={() => duplicate.mutate({ id: p.id, as_template: true }, { onSuccess: (n) => navigate(`/sales/proposals/${n.id}`) })}>
-                      <LayoutTemplate /> Save as template
+                    <DropdownMenuItem onSelect={() => duplicate.mutate({ id: p.id, as_template: true }, { onSuccess: (n) => navigate(`/sales/proposals/${n.id}`) })}>Save as template
                     </DropdownMenuItem>
                   )}
-                  {p.status !== "accepted" && <DropdownMenuItem destructive onSelect={() => setDeleting(true)}><Trash2 /> Delete</DropdownMenuItem>}
+                  {p.status !== "accepted" && <DropdownMenuItem destructive onSelect={() => setDeleting(true)}>Delete</DropdownMenuItem>}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -221,7 +222,7 @@ function Editor({ proposal: p }: { proposal: ProposalDetail }) {
               <Field label="Title" htmlFor="pp-title" error={errors.title}>
                 <Input id="pp-title" disabled={!editable} value={draft.title} onChange={(e) => set("title", e.target.value)} />
               </Field>
-              <Field label="Introduction" htmlFor="pp-intro" hint="A short, personal opening — what you understood about their business and goals.">
+              <Field label="Introduction" htmlFor="pp-intro" hint="A short, personal opening: what you understood about their business and goals.">
                 <Textarea id="pp-intro" disabled={!editable} rows={4} value={draft.introduction} onChange={(e) => set("introduction", e.target.value)} />
               </Field>
             </CardBody>
@@ -336,7 +337,7 @@ function Editor({ proposal: p }: { proposal: ProposalDetail }) {
               <CardBody className="text-sm">
                 <p className="font-medium">{p.recipient.company_name}</p>
                 {p.recipient.contact_name && <p className="text-muted">{p.recipient.contact_name}{p.recipient.contact_position && `, ${p.recipient.contact_position}`}</p>}
-                <p className="text-subtle">{[p.recipient.contact_email, p.recipient.contact_phone].filter(Boolean).join(" · ")}</p>
+                <p className="text-subtle">{[p.recipient.contact_email, p.recipient.contact_phone].filter(Boolean).join(", ")}</p>
               </CardBody>
             </Card>
           )}
@@ -348,7 +349,7 @@ function Editor({ proposal: p }: { proposal: ProposalDetail }) {
                   {p.versions.map((v) => (
                     <li key={v.version} className="flex justify-between text-muted">
                       <span>Version {v.version}</span>
-                      <span className="text-subtle">{formatDate(v.created_at, me.timezone, { year: "numeric" })} · {v.created_by_name}</span>
+                      <span className="text-subtle">{formatDate(v.created_at, me.timezone, { year: "numeric" })}, {v.created_by_name}</span>
                     </li>
                   ))}
                 </ul>

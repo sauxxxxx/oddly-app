@@ -156,11 +156,11 @@ function ScoreRow({
               type="button"
               role="radio"
               aria-checked={value === n}
-              aria-label={`${n} — ${SCORE_LABELS[n]}`}
+              aria-label={`${n}, ${SCORE_LABELS[n]}`}
               disabled={disabled}
               onClick={() => onChange(value === n ? null : n)}
               className={cn(
-                "size-7 rounded-lg border text-xs font-medium tabular-nums transition-colors",
+                "size-7 rounded-md border text-xs font-medium tabular-nums transition-colors",
                 value !== null && n <= value
                   ? "border-accent/40 bg-accent/80 text-white"
                   : "border-line bg-raised text-subtle hover:border-line-strong hover:text-fg",

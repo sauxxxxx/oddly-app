@@ -5,12 +5,11 @@ import { formatPlainDate } from "@/lib/format";
 /** Chart colors, aligned with the design tokens. Recharts needs literal values. */
 export const CHART = {
   accent: "#A855F7",
-  accentLight: "#C084FC",
-  magenta: "#D946EF",
+  neutral: "#85858f",
   // Neutral greys that read on both dark and light cards.
   grid: "rgba(127,127,127,0.18)",
   axis: "#85858f",
-  categorical: ["#A855F7", "#D946EF", "#6366F1", "#F472B6", "#C084FC", "#818CF8", "#E879F9", "#71717A"],
+  categorical: ["#A855F7", "#85858f", "#C084FC", "#5f5f69", "#7C3AED", "#b4b4bc", "#E9D5FF", "#3f3f46"],
 };
 
 export const axisProps = {
@@ -26,30 +25,6 @@ export function bucketLabel(bucket: string, unit: "day" | "week" | "month") {
     : formatPlainDate(bucket, { month: "short", day: "numeric" });
 }
 
-/** SVG <defs> for the reference design's diagonal hatching and soft gradients. */
-export function ChartDefs({ id }: { id: string }) {
-  return (
-    <defs>
-      <pattern id={`${id}-hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="7" height="7" fill="rgba(217,70,239,0.10)" />
-        <line x1="0" y1="0" x2="0" y2="7" stroke="rgba(240,171,252,0.75)" strokeWidth="1.6" />
-      </pattern>
-      <pattern id={`${id}-hatch-muted`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="7" height="7" fill="rgba(127,127,127,0.06)" />
-        <line x1="0" y1="0" x2="0" y2="7" stroke="rgba(127,127,127,0.55)" strokeWidth="1.4" />
-      </pattern>
-      <linearGradient id={`${id}-bar`} x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor={CHART.accentLight} />
-        <stop offset="100%" stopColor={CHART.accent} />
-      </linearGradient>
-      <linearGradient id={`${id}-area`} x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor={CHART.accent} stopOpacity={0.35} />
-        <stop offset="100%" stopColor={CHART.accent} stopOpacity={0} />
-      </linearGradient>
-    </defs>
-  );
-}
-
 interface TooltipEntry {
   name?: unknown;
   value?: unknown;
@@ -57,7 +32,7 @@ interface TooltipEntry {
   dataKey?: unknown;
 }
 
-/** Dark tooltip shared by every chart. */
+/** Tooltip shared by every chart. */
 export function ChartTooltip({
   active,
   payload,
@@ -73,7 +48,7 @@ export function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="min-w-36 rounded-xl border border-line bg-overlay px-3 py-2.5 text-xs shadow-pop">
+    <div className="min-w-36 rounded-md border border-line bg-overlay px-3 py-2.5 text-xs shadow-pop">
       {label !== undefined && (
         <p className="mb-1.5 font-medium text-fg">{labelFormatter ? labelFormatter(String(label)) : String(label)}</p>
       )}
@@ -92,13 +67,10 @@ export function ChartTooltip({
   );
 }
 
-export function LegendDot({ color, hatch, label }: { color?: string; hatch?: boolean; label: string }) {
+export function LegendDot({ color, label }: { color?: string; label: string }) {
   return (
     <span className="flex items-center gap-1.5 text-xs text-muted">
-      <span
-        className={hatch ? "hatch size-2.5 rounded-[3px] bg-magenta/30" : "size-2.5 rounded-[3px]"}
-        style={hatch ? undefined : { background: color }}
-      />
+      <span className="size-2.5 rounded-sm" style={{ background: color }} />
       {label}
     </span>
   );
