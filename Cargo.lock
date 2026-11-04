@@ -3051,7 +3051,7 @@ dependencies = [
 
 [[package]]
 name = "oddly-api"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3077,7 +3077,7 @@ dependencies = [
 
 [[package]]
 name = "oddly-desktop"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "keyring",
  "serde",
