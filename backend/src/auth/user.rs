@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use axum::{extract::FromRequestParts, http::request::Parts};
+use axum::{
+    extract::{FromRequestParts, OriginalUri},
+    http::request::Parts,
+};
 use uuid::Uuid;
 
 use super::jwt::VerifyError;
@@ -117,7 +120,9 @@ impl FromRequestParts<AppState> for AuthUser {
             });
         }
 
-        if row.must_change_password && !PASSWORD_CHANGE_ALLOWED.contains(&parts.uri.path()) {
+        // Routes are nested under /api/v1, and nesting strips that prefix from `parts.uri`.
+        let path = parts.extensions.get::<OriginalUri>().map_or(parts.uri.path(), |u| u.path());
+        if row.must_change_password && !PASSWORD_CHANGE_ALLOWED.contains(&path) {
             return Err(AppError::Forbidden {
                 code: "password_change_required",
                 message: "Set a new password before continuing.".into(),

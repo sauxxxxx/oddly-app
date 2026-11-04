@@ -809,3 +809,93 @@ async fn smoke_ai() {
     routes::ai::delete_conversation(st(), u(), Path(conv_id)).await.unwrap();
     cleanup(&state, user.id).await;
 }
+
+/// A new teammate's first sign-in, over real HTTP so routing and the auth gate are both exercised.
+#[tokio::test]
+async fn smoke_temporary_password_flow() {
+    let Some((state, owner)) = setup().await else { return };
+
+    // Create the member and sign in through Supabase with the temporary password.
+    let email = format!("oddly-smoke-{}@example.com", Uuid::new_v4().simple());
+    let created = to_value(
+        routes::team::create_member(
+            State(state.clone()),
+            owner.clone(),
+            Json(de(json!({ "email": email, "full_name": format!("{TAG} New Member"), "role_key": "sales_rep" }))),
+        )
+        .await,
+    );
+    let member_id: Uuid = de(created["member"]["id"].clone());
+    let temporary = created["temporary_password"].as_str().unwrap().to_owned();
+
+    let http = reqwest::Client::new();
+    let supabase = state.config.supabase_url.clone();
+    let secret = state.config.supabase_secret_key.clone();
+    let session: Value = http
+        .post(format!("{supabase}/auth/v1/token?grant_type=password"))
+        .header("apikey", &secret)
+        .json(&json!({ "email": email, "password": temporary }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let token = session["access_token"].as_str().unwrap_or_default().to_owned();
+
+    // The real router, as the app reaches it.
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}/api/v1", listener.local_addr().unwrap());
+    let app = routes::router(state.clone());
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+    let get = |path: &'static str| {
+        let (http, url, token) = (http.clone(), format!("{base}{path}"), token.clone());
+        async move {
+            let res = http.get(url).bearer_auth(token).send().await.unwrap();
+            (res.status().as_u16(), res.json::<Value>().await.unwrap_or(Value::Null))
+        }
+    };
+
+    let (me_status, me_before) = get("/me").await;
+    let (leads_status, leads_before) = get("/leads").await;
+    let new_password = format!("Sm0ke-{}", Uuid::new_v4().simple());
+    let changed = http
+        .post(format!("{base}/me/password"))
+        .bearer_auth(&token)
+        .json(&json!({ "password": new_password }))
+        .send()
+        .await
+        .unwrap();
+    let changed_status = changed.status().as_u16();
+    let (after_status, me_after) = get("/me").await;
+    let (leads_after_status, _) = get("/leads").await;
+
+    // Remove the temporary account before asserting, so a failure leaves nothing behind.
+    for sql in [
+        "delete from public.audit_logs where actor_id = $1 or entity_id = $1",
+        "delete from public.activities where actor_id = $1 or entity_id = $1",
+    ] {
+        sqlx::query(sql).bind(member_id).execute(&state.db).await.expect(sql);
+    }
+    let request = http.delete(format!("{supabase}/auth/v1/admin/users/{member_id}")).header("apikey", &secret);
+    let request = if secret.starts_with("eyJ") { request.bearer_auth(&secret) } else { request };
+    let deleted = request.send().await.unwrap().status();
+    let left: bool = sqlx::query_scalar("select exists (select 1 from public.profiles where id = $1)")
+        .bind(member_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap();
+
+    assert!(!token.is_empty(), "temporary password must sign in: {session}");
+    assert_eq!(me_status, 200, "/me must load during a forced password change: {me_before}");
+    assert_eq!(me_before["must_change_password"], true);
+    assert_eq!(leads_status, 403, "everything else stays blocked: {leads_before}");
+    assert_eq!(leads_before["error"]["code"], "password_change_required");
+    assert_eq!(changed_status, 200, "setting a new password must work");
+    assert_eq!(after_status, 200);
+    assert_eq!(me_after["must_change_password"], false);
+    assert_eq!(leads_after_status, 200, "the app opens up after the password is changed");
+    assert!(deleted.is_success(), "temporary account removed: {deleted}");
+    assert!(!left, "temporary profile removed");
+}
